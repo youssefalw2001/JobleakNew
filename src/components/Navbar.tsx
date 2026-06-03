@@ -50,19 +50,39 @@ export default function Navbar({ currentRoute, onRouteChange }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Logo Brand Frame */}
+          {/* Logo Brand Frame - UPGRADED WITH ANIMATION */}
           <div className="flex items-center">
             <button 
               id="brand-logo-trigger"
               onClick={() => handleNavClick('#home')} 
-              className="flex items-center space-x-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-1 transition-transform hover:scale-[1.02]"
+              className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-1 transition-all hover:scale-[1.03] group"
             >
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white overflow-hidden shadow-lg shadow-blue-500/30 border border-white/10">
-                <Shield className="h-5 w-5 text-white" />
+              {/* Premium Animated Logo */}
+              <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-blue-600 text-white overflow-hidden shadow-xl shadow-blue-500/40 border border-white/20 group-hover:shadow-blue-400/60 transition-all duration-300">
+                {/* Animated pulse ring */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-400 animate-pulse opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                
+                {/* Rotating background gradient */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity animate-shimmer"></div>
+                
+                {/* Icon with drop effect */}
+                <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                  <Layers className="h-5 w-5 text-white drop-shadow-lg" />
+                </div>
+                
+                {/* Corner accent */}
+                <div className="absolute top-0 right-0 w-2 h-2 bg-emerald-400 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
-              <span className="text-2xl font-display font-bold tracking-tight text-white flex items-center">
-                Job<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-black">Leak</span>
-              </span>
+              
+              {/* Brand Text with Gradient */}
+              <div className="flex flex-col items-start">
+                <span className="text-2xl font-display font-bold tracking-tight text-white flex items-center leading-none">
+                  Job<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 font-black">Leak</span>
+                </span>
+                <span className="text-[9px] font-mono font-bold tracking-widest text-slate-500 uppercase leading-none mt-0.5">
+                  Intelligence Platform
+                </span>
+              </div>
             </button>
           </div>
 

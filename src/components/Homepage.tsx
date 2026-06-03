@@ -93,24 +93,54 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-7 space-y-7"
             >
-              <div className="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 px-3.5 py-1 rounded-full backdrop-blur-md">
-                <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-sm font-mono font-bold tracking-widest text-blue-400 uppercase">
-                  Contractor Intelligence Platform
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.5 }}
+                className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-full backdrop-blur-md shadow-lg"
+              >
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
                 </span>
-              </div>
+                <span className="text-sm font-mono font-bold tracking-widest text-blue-400 uppercase">
+                  Weather-Triggered Lead Intelligence
+                </span>
+              </motion.div>
               
-              <div className="space-y-4">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-medium tracking-tight leading-none text-white">
-                  Find local contractor jobs <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 font-extrabold">
-                    before your competitors do.
+              <div className="space-y-5">
+                <motion.h1 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="text-4xl sm:text-5xl lg:text-7xl font-display font-bold tracking-tight leading-[1.1] text-white"
+                >
+                  Strike First. <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 font-black">
+                    Win Every Time.
                   </span>
-                </h1>
+                </motion.h1>
                 
-                <p className="text-base sm:text-md text-slate-400 leading-relaxed font-sans max-w-2xl">
-                  We parse live weather anomalies, municipal permit activity, and search volume surges to forecast high-urgency services. Lock in exclusive HVAC, plumbing, or roofing leads ahead of local bid wars.
-                </p>
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  className="text-lg sm:text-xl text-slate-300 leading-relaxed font-medium max-w-2xl"
+                >
+                  Stop chasing cold leads. Our <span className="text-blue-400 font-bold">Deep Market Audit™</span> detects weather triggers, permit spikes, and search intent surges—delivering <span className="text-emerald-400 font-bold">high-urgency contractor leads</span> before your competitors even know they exist.
+                </motion.p>
+                
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 rounded-xl"
+                >
+                  <Zap className="h-5 w-5 text-emerald-400 animate-pulse" />
+                  <span className="text-sm font-bold text-emerald-400">
+                    Real-time alerts. Zero guesswork. Maximum ROI.
+                  </span>
+                </motion.div>
               </div>
 
               {/* Instant action triggers */}
@@ -357,6 +387,216 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               <p className="text-[9px] text-slate-400 font-mono font-bold tracking-widest uppercase">Avg Saved Ad Waste</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 🔥 NEW: DEEP MARKET AUDIT™ FEATURE SHOWCASE - DOPAMINE OVERLOAD */}
+      <section className="py-24 relative overflow-hidden border-b border-slate-800">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/10 to-slate-950" />
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center max-w-4xl mx-auto mb-16"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-indigo-500/10 border border-emerald-500/30 px-5 py-2.5 rounded-full backdrop-blur-md shadow-xl mb-6"
+            >
+              <Cpu className="h-5 w-5 text-emerald-400 animate-pulse" />
+              <span className="text-sm font-mono font-black tracking-widest text-emerald-400 uppercase">
+                Deep Market Audit™ Engine
+              </span>
+              <span className="px-2 py-0.5 bg-emerald-500 text-white text-[10px] font-black rounded-full">NEW</span>
+            </motion.div>
+            
+            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-display font-black tracking-tight leading-none text-white mb-6">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-white">
+                We Don't Just Find Leads.
+              </span>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-500">
+                We Predict Them.
+              </span>
+            </h2>
+            
+            <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
+              Our proprietary <span className="text-emerald-400 font-bold">Deep Market Audit™</span> analyzes{' '}
+              <span className="text-blue-400 font-bold">27 data signals</span> in real-time to detect
+              high-value opportunities <span className="text-orange-400 font-bold">18-72 hours</span> before your competitors.
+            </p>
+          </motion.div>
+
+          {/* Feature Grid with Animated Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {[
+              {
+                icon: CloudSun,
+                title: 'Weather Trigger Detection',
+                description: 'Real-time NWS alerts, temperature extremes, storm tracking, and precipitation analysis.',
+                metric: '142K+ feeds',
+                color: 'from-blue-500 to-indigo-500',
+                delay: 0.1
+              },
+              {
+                icon: Search,
+                title: 'Search Intent Forecasting',
+                description: 'Predictive keyword volume spikes, semantic urgency scoring, and competitive gap analysis.',
+                metric: '95-point scale',
+                color: 'from-emerald-500 to-teal-500',
+                delay: 0.2
+              },
+              {
+                icon: Activity,
+                title: 'Permit Velocity Tracking',
+                description: 'Municipal construction permits, federal contract bids, and local government projects.',
+                metric: '418 counties',
+                color: 'from-orange-500 to-red-500',
+                delay: 0.3
+              },
+              {
+                icon: DollarSign,
+                title: 'CPC Cost Intelligence',
+                description: 'Real-time auction pricing, competitor spend patterns, and ROI optimization insights.',
+                metric: '$3.4K saved/mo',
+                color: 'from-purple-500 to-pink-500',
+                delay: 0.4
+              },
+              {
+                icon: Radio,
+                title: 'Market Density Mapping',
+                description: 'Competitor saturation analysis, white-space identification, and expansion opportunities.',
+                metric: '98.4% accuracy',
+                color: 'from-cyan-500 to-blue-500',
+                delay: 0.5
+              },
+              {
+                icon: Zap,
+                title: 'Instant Campaign Generation',
+                description: 'Pre-written Google Ads, LSA templates, email sequences, and landing page copy.',
+                metric: '< 5 min deploy',
+                color: 'from-yellow-500 to-orange-500',
+                delay: 0.6
+              },
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: feature.delay, duration: 0.5 }}
+                whileHover={{ scale: 1.03, y: -5 }}
+                className="group relative bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-slate-900/90 backdrop-blur-xl border border-slate-800 hover:border-blue-500/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 cursor-pointer overflow-hidden"
+              >
+                {/* Animated gradient overlay */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                
+                {/* Icon with glow effect */}
+                <div className="relative z-10 mb-4">
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300`}>
+                    <feature.icon className="h-7 w-7 text-white" />
+                  </div>
+                </div>
+                
+                {/* Content */}
+                <div className="relative z-10 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <h3 className="font-display font-bold text-white text-lg leading-tight group-hover:text-blue-300 transition-colors">
+                      {feature.title}
+                    </h3>
+                    <span className="flex-shrink-0 px-2 py-0.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-mono font-bold rounded">
+                      {feature.metric}
+                    </span>
+                  </div>
+                  
+                  <p className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors">
+                    {feature.description}
+                  </p>
+                  
+                  {/* Animated progress bar */}
+                  <div className="pt-2">
+                    <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: '0%' }}
+                        whileInView={{ width: '100%' }}
+                        viewport={{ once: true }}
+                        transition={{ delay: feature.delay + 0.5, duration: 1, ease: 'easeOut' }}
+                        className={`h-full bg-gradient-to-r ${feature.color}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Bottom CTA with stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.7, duration: 0.6 }}
+            className="bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 rounded-2xl p-8 sm:p-12 shadow-2xl border border-blue-500/50 relative overflow-hidden"
+          >
+            {/* Animated background pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-shimmer" />
+            </div>
+            
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              <div className="space-y-4">
+                <h3 className="text-3xl sm:text-4xl font-display font-black text-white leading-tight">
+                  See Your Market Intelligence in{' '}
+                  <span className="text-emerald-300">Under 60 Seconds</span>
+                </h3>
+                <p className="text-blue-100 text-lg leading-relaxed">
+                  Run a free Deep Market Audit™ scan now. No credit card. No commitment. Just pure intelligence.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => { onRouteChange('#scan'); window.location.hash = '#scan'; }}
+                  className="px-8 py-4 bg-white text-blue-600 font-display font-black rounded-xl shadow-xl hover:shadow-2xl transition-all flex items-center space-x-2 text-lg group"
+                >
+                  <span>Start Free Audit Now</span>
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
+              </div>
+              
+              {/* Live Stats Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'Data Points Analyzed', value: '27+', icon: Activity },
+                  { label: 'Average Lead Time', value: '18-72h', icon: Zap },
+                  { label: 'Accuracy Rate', value: '98.4%', icon: Star },
+                  { label: 'Time to Deploy', value: '< 5min', icon: CloudSun },
+                ].map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.8 + index * 0.1, duration: 0.4 }}
+                    className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 text-center"
+                  >
+                    <stat.icon className="h-6 w-6 text-emerald-300 mx-auto mb-2" />
+                    <p className="text-2xl sm:text-3xl font-display font-black text-white">{stat.value}</p>
+                    <p className="text-xs text-blue-200 font-mono font-bold uppercase tracking-wide">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
