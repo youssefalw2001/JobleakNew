@@ -193,13 +193,3 @@ export default function Footer({ onRouteChange }: FooterProps) {
     </footer>
   );
 }
-        <div className="mt-8 pt-6 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 text-[11px] font-sans">
-          <span>&copy; {currentYear} JobLeak Intelligence Technologies. All rights reserved.</span>
-          <div className="flex space-x-4">
-            <span className="text-slate-400">Confidential executive contractor platform. Data processed aligns with strict security parameters.</span>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-}
