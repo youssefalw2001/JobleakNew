@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { 
   Activity, 
   TrendingUp, 
@@ -20,7 +21,10 @@ import {
   PlusCircle, 
   Trash2,
   ShieldCheck,
-  Award
+  Award,
+  Zap,
+  Target,
+  DollarSign
 } from 'lucide-react';
 import { getLocalLeads } from '../supabase';
 import { Lead } from '../types';
@@ -196,60 +200,97 @@ export default function Dashboard() {
   return (
     <div id="dashboard-portal-root" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 transition-all duration-300">
       
-      {/* PERSONALIZED CONTROLLER BANNER */}
+      {/* PERSONALIZED CONTROLLER BANNER - UPGRADED WITH ANIMATIONS */}
       {currentUser ? (
-        <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between relative overflow-hidden">
-          {/* Subtle grid accent */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="relative bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/20 border border-slate-800 text-white rounded-2xl p-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between overflow-hidden group"
+        >
+          {/* Animated background effects */}
           <div className="absolute inset-0 opacity-[0.02] pointer-events-none admin-radar-grid" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-700" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700" />
           
-          <div className="space-y-2 relative z-10">
-            <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-0.5 rounded font-mono text-[9px] font-extrabold uppercase bg-blue-600 text-white">
-                {userPlan} Membership Profile
+          <div className="space-y-3 relative z-10">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="flex items-center space-x-3"
+            >
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
               </span>
-              <span className="text-slate-400 font-mono text-sm">• Workspace Session Verified</span>
-            </div>
+              <span className="px-3 py-1 rounded-full font-mono text-[10px] font-black uppercase bg-blue-600 text-white shadow-lg">
+                {userPlan} Membership
+              </span>
+              <span className="text-slate-400 font-mono text-sm flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                Verified Session
+              </span>
+            </motion.div>
             
-            <h2 className="text-2xl font-display font-black text-white tracking-tight flex items-center gap-2">
-              <span>{currentUser.businessName || 'Active Dispatch'} Command Dashboard</span>
-            </h2>
+            <motion.h2
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="text-3xl font-display font-black text-white tracking-tight flex items-center gap-3"
+            >
+              <Target className="h-8 w-8 text-blue-400" />
+              {currentUser.businessName || 'Active Dispatch'} Command Center
+            </motion.h2>
             
-            <div className="text-sm text-slate-400 font-mono flex flex-wrap gap-x-4 gap-y-1 items-center">
-              <span className="flex items-center text-blue-400">
-                <MapPin className="h-3.5 w-3.5 mr-1 text-blue-505" />
-                Target Region: <strong>{currentUser.city}</strong>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="text-sm text-slate-300 font-mono flex flex-wrap gap-x-5 gap-y-2 items-center"
+            >
+              <span className="flex items-center gap-2 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/30">
+                <MapPin className="h-4 w-4 text-blue-400" />
+                <span className="text-blue-300 font-bold">{currentUser.city}</span>
               </span>
-              <span className="flex items-center text-indigo-400">
-                <Layers className="h-3.5 w-3.5 mr-1" />
-                Primary Trade: <strong>{currentUser.industry} Core</strong>
+              <span className="flex items-center gap-2 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/30">
+                <Layers className="h-4 w-4 text-indigo-400" />
+                <span className="text-indigo-300 font-bold">{currentUser.industry}</span>
               </span>
-              {currentUser.email ? (
-                <span>Email Coordinates: <strong>{currentUser.email}</strong></span>
-              ) : (
-                <span>Cell coordinates: <strong>{currentUser.phone}</strong></span>
-              )}
-            </div>
+              <span className="text-slate-400">
+                {currentUser.email || currentUser.phone}
+              </span>
+            </motion.div>
           </div>
 
-          <div className="mt-4 md:mt-0 relative z-10 flex shrink-0 space-x-2">
-            <button
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="mt-6 md:mt-0 relative z-10 flex shrink-0 space-x-3"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowLogForm(!showLogForm)}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold text-sm uppercase tracking-wider rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer shadow"
+              className="px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-mono font-bold text-sm uppercase tracking-wider rounded-xl transition-all flex items-center space-x-2 cursor-pointer shadow-lg shadow-blue-500/30"
             >
-              <PlusCircle className="h-4 w-4" />
-              <span>Log Manual Call</span>
-            </button>
+              <PlusCircle className="h-5 w-5" />
+              <span>Log Call</span>
+            </motion.button>
             
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               id="dashboard-logout-action"
               onClick={handleLogout}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-red-950 hover:text-red-300 text-slate-300 font-mono font-bold text-sm uppercase tracking-wider rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer border border-slate-700/80"
+              className="px-5 py-3 bg-slate-800 hover:bg-red-950 hover:text-red-300 text-slate-300 font-mono font-bold text-sm uppercase tracking-wider rounded-xl transition-all flex items-center space-x-2 cursor-pointer border border-slate-700"
             >
-              <LogOut className="h-4 w-4" />
-              <span>Log Out</span>
-            </button>
-          </div>
-        </div>
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </motion.button>
+          </motion.div>
+        </motion.div>
       ) : (
         <>
           {/* GUEST BANNER */}
@@ -341,72 +382,195 @@ export default function Dashboard() {
         </form>
       )}
 
-      {/* 4-BENTO METRIC GRID BINDED DIRECTLY TO LOGGED-IN SESSION DETAILS */}
+      {/* 4-BENTO METRIC GRID WITH PREMIUM ANIMATIONS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        {/* Card 1: LTD Billings dynamic */}
-        <div className="bento-card p-5 space-y-2 border-r-4 border-r-blue-600">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-mono font-bold tracking-wider uppercase">LTD EST. CONTRACT REVENUE</span>
-            <span className="p-1 rounded bg-blue-50 text-blue-600"><TrendingUp className="h-4 w-4" /></span>
+        {/* Card 1: LTD Billings dynamic - UPGRADED */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          whileHover={{ scale: 1.02, y: -5 }}
+          className="group relative bento-card p-6 space-y-3 border-r-4 border-r-blue-600 overflow-hidden cursor-pointer"
+        >
+          {/* Animated gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between text-slate-400 mb-2">
+              <span className="text-[10px] font-mono font-bold tracking-wider uppercase">LTD EST. CONTRACT REVENUE</span>
+              <motion.span 
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20"
+              >
+                <TrendingUp className="h-5 w-5" />
+              </motion.span>
+            </div>
+            
+            <motion.h3 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="text-4xl font-display font-black text-white mb-2"
+            >
+              ${dynamicBillings.toLocaleString()}
+            </motion.h3>
+            
+            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+              Calculated at <span className="text-blue-400 font-mono font-bold">${averageContractValue}</span> avg per active lead dial.
+            </p>
+            
+            {/* Animated progress bar */}
+            <div className="mt-3 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '85%' }}
+                transition={{ delay: 0.5, duration: 1, ease: 'easeOut' }}
+                className="h-full bg-gradient-to-r from-blue-400 to-blue-600"
+              />
+            </div>
           </div>
-          
-          <h3 className="text-3xl font-display font-black text-white">
-            ${dynamicBillings.toLocaleString()}
-          </h3>
-          
-          <p className="text-[11px] text-slate-505 text-slate-400 font-sans">
-            Calculated at <strong className="text-white font-mono">${averageContractValue} avg</strong> per active lead dial.
-          </p>
-        </div>
+        </motion.div>
 
-        {/* Card 2: Calls Logged Dynamic */}
-        <div className="bento-card p-5 space-y-2 border-r-4 border-r-indigo-600">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-mono font-bold tracking-wider uppercase">MY REGISTERED CALLS</span>
-            <span className="p-1 rounded bg-indigo-50 text-indigo-600"><Users className="h-4 w-4" /></span>
+        {/* Card 2: Calls Logged Dynamic - UPGRADED */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          whileHover={{ scale: 1.02, y: -5 }}
+          className="group relative bento-card p-6 space-y-3 border-r-4 border-r-indigo-600 overflow-hidden cursor-pointer"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between text-slate-400 mb-2">
+              <span className="text-[10px] font-mono font-bold tracking-wider uppercase">MY REGISTERED CALLS</span>
+              <motion.span
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+              >
+                <Users className="h-5 w-5" />
+              </motion.span>
+            </div>
+            
+            <motion.h3
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="text-4xl font-display font-black text-white mb-2"
+            >
+              {currentUser ? currentUser.loggedCalls.length : 12}
+            </motion.h3>
+            
+            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+              {currentUser ? 'Recorded specifically under your profile.' : 'Total simulated contractor calls.'}
+            </p>
+            
+            <div className="mt-3 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '65%' }}
+                transition={{ delay: 0.6, duration: 1, ease: 'easeOut' }}
+                className="h-full bg-gradient-to-r from-indigo-400 to-indigo-600"
+              />
+            </div>
           </div>
-          
-          <h3 className="text-3xl font-display font-black text-white">
-            {currentUser ? currentUser.loggedCalls.length : 12}
-          </h3>
-          
-          <p className="text-[11px] text-slate-400 font-sans">
-            {currentUser ? 'Recorded specifically under your profile.' : 'Total simulated contractor calls.'}
-          </p>
-        </div>
+        </motion.div>
 
-        {/* Card 3: Ad Spend Saved */}
-        <div className="bento-card p-5 space-y-2 border-r-4 border-r-emerald-600">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-mono font-bold tracking-wider uppercase">ESTIMATED AD SAVINGS</span>
-            <span className="p-1 rounded bg-emerald-50 text-emerald-600"><TrendingUp className="h-4 w-4" /></span>
+        {/* Card 3: Ad Spend Saved - UPGRADED */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          whileHover={{ scale: 1.02, y: -5 }}
+          className="group relative bento-card p-6 space-y-3 border-r-4 border-r-emerald-600 overflow-hidden cursor-pointer"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between text-slate-400 mb-2">
+              <span className="text-[10px] font-mono font-bold tracking-wider uppercase">ESTIMATED AD SAVINGS</span>
+              <motion.span
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              >
+                <DollarSign className="h-5 w-5" />
+              </motion.span>
+            </div>
+            
+            <motion.h3
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="text-4xl font-display font-black text-white mb-2"
+            >
+              ${currentUser ? currentUser.adSpendSaved.toLocaleString() : '1,450'}
+            </motion.h3>
+            
+            <p className="text-xs text-emerald-400 font-sans leading-relaxed flex items-center gap-1">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Blocked wasteful broad keywords
+            </p>
+            
+            <div className="mt-3 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '92%' }}
+                transition={{ delay: 0.7, duration: 1, ease: 'easeOut' }}
+                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600"
+              />
+            </div>
           </div>
-          
-          <h3 className="text-3xl font-display font-black text-white">
-            ${currentUser ? currentUser.adSpendSaved.toLocaleString() : '1,450'}
-          </h3>
-          
-          <p className="text-[11px] text-slate-400 font-sans text-emerald-700">
-            ✓ Blocked wasteful broad keywords.
-          </p>
-        </div>
+        </motion.div>
 
-        {/* Card 4: Active Plan Membership Tracker */}
-        <div className="bento-card p-5 space-y-2 border-r-4 border-r-slate-800">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-mono font-bold tracking-wider uppercase">ACTIVE PLAN PACKAGE</span>
-            <span className="p-1 rounded bg-slate-150 text-slate-705"><Activity className="h-4 w-4" /></span>
+        {/* Card 4: Active Plan - UPGRADED */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          whileHover={{ scale: 1.02, y: -5 }}
+          className="group relative bento-card p-6 space-y-3 border-r-4 border-r-orange-600 overflow-hidden cursor-pointer"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between text-slate-400 mb-2">
+              <span className="text-[10px] font-mono font-bold tracking-wider uppercase">ACTIVE PLAN PACKAGE</span>
+              <motion.span
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20"
+              >
+                <Zap className="h-5 w-5" />
+              </motion.span>
+            </div>
+            
+            <motion.h3
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+              className="text-2xl font-display font-black text-white uppercase tracking-tight mb-2"
+            >
+              {userPlan}
+            </motion.h3>
+            
+            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+              Matched region: <span className="text-orange-400 font-mono font-bold">{currentUser ? currentUser.city : 'All Metros'}</span>
+            </p>
+            
+            <div className="mt-3 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ delay: 0.8, duration: 1, ease: 'easeOut' }}
+                className="h-full bg-gradient-to-r from-orange-400 to-orange-600"
+              />
+            </div>
           </div>
-          
-          <h3 className="text-xl font-display font-black text-slate-955 text-white uppercase tracking-tight py-1 pt-2">
-            {userPlan} Active
-          </h3>
-          
-          <p className="text-[11px] text-slate-400 font-sans">
-            Matched region: <strong className="text-slate-100 font-mono font-bold">{currentUser ? currentUser.city : 'All Metros'}</strong>
-          </p>
-        </div>
+        </motion.div>
 
       </div>
 
