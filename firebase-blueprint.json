@@ -1,0 +1,25 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile data",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "businessName": { "type": "string" },
+        "industry": { "type": "string" },
+        "city": { "type": "string" },
+        "subscriptionPlan": { "type": "string" },
+        "adSpendSaved": { "type": "number" },
+        "activeLeadsCount": { "type": "number" },
+        "loggedCalls": { "type": "array" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User documents"
+    }
+  }
+}

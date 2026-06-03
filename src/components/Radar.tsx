@@ -24,7 +24,11 @@ import {
   ShieldCheck,
   Signal,
   Flame,
-  Activity
+  Activity,
+  Zap,
+  Target,
+  Award,
+  Lock
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { 
@@ -42,6 +46,7 @@ import {
   SamOpportunity,
   MunicipalPermit
 } from '../integrations-api';
+import { getActiveSession } from '../authService';
 
 interface RadarProps {
   scannedData: {
@@ -61,7 +66,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
   const [timestamp, setTimestamp] = useState<string>('');
 
   // Market Feed Integration State
-  const [activeFeedTab, setActiveFeedTab] = useState<'competitors' | 'bids' | 'permits'>('competitors');
+  const [activeFeedTab, setActiveFeedTab] = useState<'competitors' | 'bids' | 'permits' | 'search_intent' | 'real_estate'>('search_intent');
   const [competitors, setCompetitors] = useState<CompetitorPlace[]>([]);
   const [bids, setBids] = useState<SamOpportunity[]>([]);
   const [permits, setPermits] = useState<MunicipalPermit[]>([]);
@@ -394,7 +399,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onModifyScan}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-display font-bold rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer shadow-lg"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-display font-bold rounded-xl text-sm uppercase tracking-widest transition-all cursor-pointer shadow-lg"
               >
                 Start Free Scan Report
               </motion.button>
@@ -409,6 +414,9 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
   const designProfile = getMarketProfile(activeMarket);
   const { score: intentScore, competition, cpcTier } = calculateSearchIntentScore(activeMarket, scannedData.serviceText, scannedData.industry);
   const weatherUrgencyValue = weatherDetails ? weatherDetails.weatherUrgency : 2;
+
+  const session = getActiveSession();
+  const isPremium = session && session.subscriptionPlan !== 'Free Trial';
 
   // Compute channels scoring using strict Card Scoring Math Matrix
   const { googleSearch, lsa, reactivation } = calculateCardScores(
@@ -447,7 +455,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
               Scout Session Active
             </div>
             
-            <span className="text-[10px] font-mono text-slate-500 flex items-center bg-slate-900 px-2 py-0.5 rounded border border-white/5">
+            <span className="text-[10px] font-mono text-slate-400 flex items-center bg-slate-900 px-2 py-0.5 rounded border border-white/5">
               <Clock className="w-3 h-3 mr-1 text-slate-400" />
               Sync: {timestamp ? new Date(timestamp).toLocaleTimeString() : 'N/A'} (UTC)
             </span>
@@ -461,7 +469,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
             Live Intelligence Radar
           </h2>
           
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-slate-400">
             Analyzing <strong className="text-white font-mono">{scannedData.industry}</strong> targets in <strong className="text-white font-mono">{activeMarket}, {weatherDetails?.region || 'US'}</strong>
           </p>
         </div>
@@ -472,7 +480,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onModifyScan}
-            className="px-4 py-2.5 bg-slate-900 border border-white/10 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-mono transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-slate-900 border border-white/10 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-sm font-mono transition-all cursor-pointer"
           >
             Adjust Target Parameters
           </motion.button>
@@ -482,7 +490,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onNavigateToCampaign}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-display font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-lg"
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-display font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-lg"
           >
             <span>Launch Campaigns</span>
             <ArrowRight className="h-4 w-4" />
@@ -509,7 +517,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
           
           <div className="space-y-1.5 relative z-10">
             <h4 className="text-white font-display font-medium text-lg">Decoding Meteorological Coordinates...</h4>
-            <p className="text-xs text-slate-400 font-mono">Querying Open-Meteo REST service endpoints & Weather.gov alert signals</p>
+            <p className="text-sm text-slate-400 font-mono">Querying Open-Meteo REST service endpoints & Weather.gov alert signals</p>
           </div>
         </div>
       ) : (
@@ -577,18 +585,18 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
               <div className="flex items-end justify-between">
                 <div>
                   <span className="text-5xl font-display font-bold text-white font-mono">{intentScore}</span>
-                  <span className="text-sm font-mono text-slate-500 ml-1">/95</span>
+                  <span className="text-sm font-mono text-slate-400 ml-1">/95</span>
                 </div>
                 
                 <div className="text-right">
-                  <span className="text-[9px] text-slate-500 font-mono block">CPC PRICING PRICE</span>
+                  <span className="text-[9px] text-slate-400 font-mono block">CPC PRICING PRICE</span>
                   <span className="px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-mono font-bold rounded">
                     {cpcTier} CPC
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-2.5 pt-4 border-t border-white/5 text-xs text-slate-400 font-sans">
+              <div className="space-y-2.5 pt-4 border-t border-white/5 text-sm text-slate-400 font-sans">
                 <div className="flex justify-between items-center">
                   <span>Ad Density Competition:</span>
                   <span className={`font-mono font-bold ${competition === 'High' ? 'text-red-400' : competition === 'Medium' ? 'text-orange-400' : 'text-green-400'}`}>
@@ -598,6 +606,10 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                 <div className="flex justify-between items-center">
                   <span>Permit Pipeline Intensity:</span>
                   <span className="font-mono text-slate-200 font-semibold">{designProfile.permitHeat} Units / 30</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Real Estate Turnover (30d):</span>
+                  <span className="font-mono text-amber-400 font-semibold">1,402 Closings</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Regional Job Market Growth:</span>
@@ -621,29 +633,29 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                 <div className="space-y-4">
                   
                   {/* Weather details numbers */}
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="grid grid-cols-3 gap-2 text-center text-sm">
                     <div className="bg-slate-900/50 p-2.5 rounded-xl border border-white/5">
                       <Thermometer className="h-4 w-4 text-orange-400 mx-auto mb-1" />
-                      <span className="text-slate-500 text-[9px] block font-mono">MAX TEMP</span>
+                      <span className="text-slate-400 text-[9px] block font-mono">MAX TEMP</span>
                       <span className="font-display font-bold text-white font-mono">{weatherDetails.maxTemp}°F</span>
                     </div>
 
                     <div className="bg-slate-900/50 p-2.5 rounded-xl border border-white/5">
                       <Wind className="h-4 w-4 text-blue-400 mx-auto mb-1" />
-                      <span className="text-slate-500 text-[9px] block font-mono">PEAK GUST</span>
+                      <span className="text-slate-400 text-[9px] block font-mono">PEAK GUST</span>
                       <span className="font-display font-bold text-white font-mono">{weatherDetails.maxWind}mph</span>
                     </div>
 
                     <div className="bg-slate-900/50 p-2.5 rounded-xl border border-white/5">
                       <CloudRain className="h-4 w-4 text-teal-400 mx-auto mb-1" />
-                      <span className="text-slate-500 text-[9px] block font-mono">RAIN SUM</span>
+                      <span className="text-slate-400 text-[9px] block font-mono">RAIN SUM</span>
                       <span className="font-display font-bold text-white font-mono">{weatherDetails.maxPrecip}"</span>
                     </div>
                   </div>
 
                   {/* Active Triggers mapped from math formulas */}
                   <div className="space-y-2">
-                    <span className="text-[9px] text-slate-500 font-mono block">TRIGGER SYSTEM ACTIVATIONS:</span>
+                    <span className="text-[9px] text-slate-400 font-mono block">TRIGGER SYSTEM ACTIVATIONS:</span>
                     {weatherDetails.triggers.length > 0 ? (
                       <div className="space-y-1.5">
                         {weatherDetails.triggers.map((trig, idx) => (
@@ -654,13 +666,13 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] font-sans text-slate-500 italic">No seasonal stress factors currently violate thresholds. Operating on base baseline benchmarks.</p>
+                      <p className="text-[11px] font-sans text-slate-400 italic">No seasonal stress factors currently violate thresholds. Operating on base baseline benchmarks.</p>
                     )}
                   </div>
 
                   {/* Active Point Alerts */}
                   <div className="space-y-2 pt-2 border-t border-white/5">
-                    <span className="text-[9px] text-slate-500 font-mono block">NWS COORDINATE HAZARDS (weather.gov):</span>
+                    <span className="text-[9px] text-slate-400 font-mono block">NWS COORDINATE HAZARDS (weather.gov):</span>
                     {weatherDetails.alerts.length > 0 ? (
                       <div className="space-y-1.5">
                         {weatherDetails.alerts.map((al, idx) => (
@@ -676,13 +688,13 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] font-sans text-slate-500">Zero active hazard warnings in geolocated space. Skyline is currently clear.</p>
+                      <p className="text-[11px] font-sans text-slate-400">Zero active hazard warnings in geolocated space. Skyline is currently clear.</p>
                     )}
                   </div>
 
                 </div>
               ) : (
-                <div className="text-xs text-slate-500 italic">No meteorological metrics sync recorded.</div>
+                <div className="text-sm text-slate-400 italic">No meteorological metrics sync recorded.</div>
               )}
             </div>
 
@@ -695,7 +707,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                 </h4>
               </div>
               
-              <div className="space-y-3 text-xs text-slate-300">
+              <div className="space-y-3 text-sm text-slate-300">
                 <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
                   <span className="text-slate-400">Total US States Covered:</span>
                   <span className="font-mono font-bold text-white bg-slate-950 border border-white/10 px-2 py-0.5 rounded text-[10px]">
@@ -752,16 +764,16 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                   Deploy to <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 underline decoration-blue-500 font-extrabold">{topChannel.name}</span> instantly
                 </h3>
                 
-                <p className="text-slate-300 text-xs font-sans max-w-2xl leading-relaxed">
+                <p className="text-slate-300 text-sm font-sans max-w-2xl leading-relaxed">
                   Based on an intent metric score of {intentScore}/95 coupled with geocoded meteorological urgency, {topChannel.name} represents your absolute highest conversion vector ({topChannel.score} merit score). {topChannel.reason}
                 </p>
 
-                <div className="pt-2 flex items-center space-x-3 text-xs font-mono">
+                <div className="pt-2 flex items-center space-x-3 text-sm font-mono">
                   <motion.button 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onNavigateToCampaign}
-                    className="px-5 py-2.5 bg-white text-slate-950 hover:bg-slate-100 transition-all font-display font-bold uppercase rounded-xl flex items-center shadow-lg cursor-pointer"
+                    className="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-100 transition-all font-display font-bold uppercase rounded-xl flex items-center shadow-lg cursor-pointer"
                   >
                     <span>Extract Free Ad Playbook Pack</span>
                     <ArrowRight className="h-3.5 w-3.5 text-blue-600 ml-1.5" />
@@ -787,18 +799,18 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                       <h4 className="text-base sm:text-lg font-display font-medium text-white">01. Google Search PPC Outbound Channel</h4>
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed font-sans max-w-xl">
+                    <p className="text-sm text-slate-400 leading-relaxed font-sans max-w-xl">
                       Inject paid ad arrays for terms matching <span className="font-semibold text-slate-200 font-mono">"{scannedData.serviceText}"</span>. Caffeinated bidding boosts are automated using active hazard indicators. Capped precisely to reduce negative search waste.
                     </p>
                   </div>
 
                   <div className="text-right flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-start shrink-0">
-                    <span className="text-[9px] text-slate-500 font-mono tracking-widest font-bold">MERIT INDEX:</span>
-                    <span className="text-4xl font-display font-bold text-blue-400 block sm:mt-1 font-mono">{googleSearch}<span className="text-[10px] text-slate-600 uppercase">/100</span></span>
+                    <span className="text-[9px] text-slate-400 font-mono tracking-widest font-bold">MERIT INDEX:</span>
+                    <span className="text-4xl font-display font-bold text-blue-400 block sm:mt-1 font-mono">{googleSearch}<span className="text-[10px] text-slate-300 uppercase">/100</span></span>
                   </div>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-[10.5px] font-mono text-slate-500">
+                <div className="mt-5 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-[10.5px] font-mono text-slate-400">
                   <div>
                     <span>Weather Urgency Factor:</span>
                     <span className="text-slate-300 ml-1 font-bold">20 + {weatherUrgencyValue}</span>
@@ -825,18 +837,18 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                       <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
                       <h4 className="text-base sm:text-lg font-display font-medium text-white">02. Local Services Ads (LSA) Radius Bidding</h4>
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed font-sans max-w-xl">
+                    <p className="text-sm text-slate-400 leading-relaxed font-sans max-w-xl">
                       Paid voice click pipelines. Scale coordinates within 15 miles of geocoded meteorological impacts to capture phone inquiries. Zero bidding waste on DIY terms.
                     </p>
                   </div>
 
                   <div className="text-right flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-start shrink-0">
-                    <span className="text-[9px] text-slate-500 font-mono tracking-widest font-bold">MERIT INDEX:</span>
-                    <span className="text-4xl font-display font-bold text-indigo-400 block sm:mt-1 font-mono">{lsa}<span className="text-[10px] text-slate-600">/100</span></span>
+                    <span className="text-[9px] text-slate-400 font-mono tracking-widest font-bold">MERIT INDEX:</span>
+                    <span className="text-4xl font-display font-bold text-indigo-400 block sm:mt-1 font-mono">{lsa}<span className="text-[10px] text-slate-300">/100</span></span>
                   </div>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-[10.5px] font-mono text-slate-500">
+                <div className="mt-5 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-[10.5px] font-mono text-slate-400">
                   <div>
                     <span>Base LSA Benchmark:</span>
                     <span className="text-slate-300 ml-1 font-bold">18 + {weatherUrgencyValue / 2}</span>
@@ -863,18 +875,18 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                       <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
                       <h4 className="text-base sm:text-lg font-display font-medium text-white">03. Inbound List Reactivation (Zero Ad Cost)</h4>
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed font-sans max-w-xl">
+                    <p className="text-sm text-slate-400 leading-relaxed font-sans max-w-xl">
                       Dispatch immediate SMS/Email reminders to historical list nodes. Highlight active emergency storm or freeze events warning contacts that delay is dangerous.
                     </p>
                   </div>
 
                   <div className="text-right flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-start shrink-0">
-                    <span className="text-[9px] text-slate-500 font-mono tracking-widest font-bold">MERIT INDEX:</span>
-                    <span className="text-4xl font-display font-bold text-purple-400 block sm:mt-1 font-mono">{reactivation}<span className="text-[10px] text-slate-600">/100</span></span>
+                    <span className="text-[9px] text-slate-400 font-mono tracking-widest font-bold">MERIT INDEX:</span>
+                    <span className="text-4xl font-display font-bold text-purple-400 block sm:mt-1 font-mono">{reactivation}<span className="text-[10px] text-slate-300">/100</span></span>
                   </div>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-[10.5px] font-mono text-slate-500">
+                <div className="mt-5 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-[10.5px] font-mono text-slate-400">
                   <div>
                     <span>Outreach Priority Index:</span>
                     <span className="text-slate-300 ml-1 font-bold">Fixed Formulaic Merit</span>
@@ -927,19 +939,31 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setActiveFeedTab('competitors')}
-                  className={`px-3 py-2 text-xs font-mono font-semibold rounded-lg border transition-all flex items-center space-x-2 cursor-pointer ${
+                  className={`px-3 py-2 text-sm font-mono font-semibold rounded-lg border transition-all flex items-center space-x-2 cursor-pointer ${
                     activeFeedTab === 'competitors'
                       ? 'bg-blue-600 border-blue-500 text-white'
                       : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-slate-850'
                   }`}
                 >
                   <MapPin className="h-3.5 w-3.5 text-blue-400" />
-                  <span>Competitor Outposts ({competitors.length})</span>
+                  <span>Competitors ({competitors.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveFeedTab('search_intent')}
+                  className={`px-3 py-2 text-sm font-mono font-semibold rounded-lg border transition-all flex items-center space-x-2 cursor-pointer ${
+                    activeFeedTab === 'search_intent'
+                      ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                      : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-white/10'
+                  }`}
+                >
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Local Search Trends</span>
                 </button>
 
                 <button
                   onClick={() => setActiveFeedTab('bids')}
-                  className={`px-3 py-2 text-xs font-mono font-semibold rounded-lg border transition-all flex items-center space-x-2 cursor-pointer ${
+                  className={`px-3 py-2 text-sm font-mono font-semibold rounded-lg border transition-all flex items-center space-x-2 cursor-pointer ${
                     activeFeedTab === 'bids'
                       ? 'bg-blue-600 border-blue-500 text-white'
                       : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-slate-850'
@@ -951,14 +975,26 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
 
                 <button
                   onClick={() => setActiveFeedTab('permits')}
-                  className={`px-3 py-2 text-xs font-mono font-semibold rounded-lg border transition-all flex items-center space-x-2 cursor-pointer ${
+                  className={`px-3 py-2 text-sm font-mono font-semibold rounded-lg border transition-all flex items-center space-x-2 cursor-pointer ${
                     activeFeedTab === 'permits'
-                      ? 'bg-blue-600 border-blue-500 text-white'
-                      : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-slate-850'
+                      ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                      : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-white/10'
                   }`}
                 >
                   <Database className="h-3.5 w-3.5 text-purple-400" />
                   <span>Muni Permits ({permits.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveFeedTab('real_estate')}
+                  className={`px-3 py-2 text-sm font-mono font-semibold rounded-lg border transition-all flex items-center space-x-2 cursor-pointer ${
+                    activeFeedTab === 'real_estate'
+                      ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                      : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-white/10'
+                  }`}
+                >
+                  <MapPin className="h-3.5 w-3.5 text-amber-400" />
+                  <span>Housing Turnover</span>
                 </button>
               </div>
 
@@ -967,23 +1003,92 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                 {feedsLoading ? (
                   <div className="space-y-3 py-6 text-center">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto animate-pulse" />
-                    <p className="text-[10px] font-mono text-slate-500">Querying API coordinates ...</p>
+                    <p className="text-[10px] font-mono text-slate-400">Querying API coordinates ...</p>
                   </div>
                 ) : feedError ? (
                   <div className="text-center py-6 text-red-400 space-y-1">
                     <AlertTriangle className="h-7 w-7 text-red-500 mx-auto" />
-                    <h5 className="font-mono text-xs font-bold">API Connection Refused</h5>
+                    <h5 className="font-mono text-sm font-bold">API Connection Refused</h5>
                     <p className="text-[10px] text-slate-400 max-w-sm mx-auto leading-relaxed">{feedError}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {activeFeedTab === 'search_intent' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-white text-sm font-bold flex items-center">
+                            <TrendingUp className="h-4 w-4 text-emerald-400 mr-2" />
+                            Live Search Volume Heatmap
+                          </h4>
+                          <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono rounded border border-emerald-500/20">
+                            SURGING
+                          </span>
+                        </div>
+                        <div className="bg-slate-900/50 p-3 rounded-lg border border-white/5 relative">
+                          <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+                            Google searches for <strong>"{scannedData?.industry}"</strong> and related emergency services in <strong>{scannedData?.city}</strong> have spiked sharply within the last 4 hours, heavily correlated with recent weather shifts.
+                          </p>
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-slate-300">"Emergency {scannedData?.industry} near me"</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="w-[85%] h-full bg-emerald-500" />
+                                </div>
+                                <span className="text-emerald-400 font-mono font-bold">+184%</span>
+                              </div>
+                            </div>
+                            
+                            <div className={`flex justify-between items-center text-xs ${!isPremium ? 'blur-sm select-none' : ''}`}>
+                              <span className="text-slate-300">"Affordable {scannedData?.industry} {scannedData?.city}"</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="w-[62%] h-full bg-blue-400" />
+                                </div>
+                                <span className="text-blue-400 font-mono font-bold">+62%</span>
+                              </div>
+                            </div>
+                            <div className={`flex justify-between items-center text-xs ${!isPremium ? 'blur-sm select-none' : ''}`}>
+                              <span className="text-slate-300">"{scannedData?.industry} repair cost"</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="w-[45%] h-full bg-amber-400" />
+                                </div>
+                                <span className="text-amber-400 font-mono font-bold">+45%</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {!isPremium && (
+                            <div className="absolute inset-0 top-1/2 flex flex-col items-center justify-center bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pt-6 rounded-b-lg">
+                              <Lock className="h-5 w-5 text-amber-400 mb-1.5" />
+                              <div className="text-[10px] font-mono font-bold text-slate-200">2 HIDDEN SEARCH TRENDS</div>
+                              <a href="#pricing" className="mt-2 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold rounded">
+                                UNLOCK DATA
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="mt-5 border-t border-slate-800/60 pt-4">
+                          <button className="w-full relative group overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all duration-300 py-3.5">
+                            <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                            <div className="flex items-center justify-center gap-2 font-display font-black tracking-wide text-xs sm:text-sm">
+                              <Zap className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
+                              LAUNCH EMERGENCY CAMPAIGN • EST. REVENUE: $14,200
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {activeFeedTab === 'competitors' && (
-                      <div className="divide-y divide-white/5">
+                      <div className="divide-y divide-white/5 relative">
                         {competitors.length > 0 ? (
-                          competitors.map((comp, idx) => (
+                          (isPremium ? competitors : competitors.slice(0, 1)).map((comp, idx) => (
                             <div key={idx} className="py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                               <div className="min-w-0">
-                                <h4 className="text-white text-xs font-bold">{comp.name}</h4>
+                                <h4 className="text-white text-sm font-bold">{comp.name}</h4>
                                 <p className="text-[10px] text-slate-400 truncate">{comp.address}</p>
                               </div>
                               
@@ -993,7 +1098,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                                     <Sparkles className="h-3 w-3 text-amber-400" />
                                     <span className="text-amber-350 font-bold">{comp.rating}</span>
                                     {comp.reviewsCount && (
-                                      <span className="text-slate-500">({comp.reviewsCount})</span>
+                                      <span className="text-slate-400">({comp.reviewsCount})</span>
                                     )}
                                   </div>
                                 )}
@@ -1004,21 +1109,41 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                             </div>
                           ))
                         ) : (
-                          <p className="text-slate-500 text-xs italic font-mono text-center py-4">No competitors recorded.</p>
+                          <p className="text-slate-400 text-sm italic font-mono text-center py-4">No competitors recorded.</p>
                         )}
+                        
+                        {!isPremium && competitors.length > 1 && (
+                          <div className="py-8 flex flex-col items-center justify-center text-center bg-slate-950/40 rounded-b-xl border-t border-white/5 mt-2">
+                            <Lock className="h-6 w-6 text-slate-500 mb-2" />
+                            <h5 className="text-white font-bold text-sm">+{competitors.length - 1} Competitors Hidden</h5>
+                            <p className="text-xs text-slate-400 mt-1.5 max-w-xs text-center">Unlock Premium to reveal their operational statuses, review vulnerabilities, & geo-hijack their traffic.</p>
+                            <a href="#pricing" className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold font-mono transition-colors shadow-lg shadow-blue-500/20">
+                              UNLOCK ALL
+                            </a>
+                          </div>
+                        )}
+                        <div className="pt-4 border-t border-slate-800/60 mt-2">
+                          <button className="w-full relative group overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all duration-300 py-3.5">
+                            <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                            <div className="flex items-center justify-center gap-2 font-display font-black tracking-wide text-xs sm:text-sm uppercase">
+                              <Target className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
+                              GEO-TARGET COMPETITOR RADIUS • HIJACK {competitors.length * 1250} CLICKS
+                            </div>
+                          </button>
+                        </div>
                       </div>
                     )}
 
                     {activeFeedTab === 'bids' && (
-                      <div className="space-y-3.5">
+                      <div className="space-y-3.5 relative">
                         {bids.length > 0 ? (
-                          bids.map((bid, idx) => (
+                          (isPremium ? bids : bids.slice(0, 1)).map((bid, idx) => (
                             <div key={idx} className="bg-slate-900/30 border border-white/5 p-3 rounded-lg flex flex-col sm:flex-row justify-between sm:items-start gap-3">
                               <div className="space-y-1">
                                 <span className="text-[9px] font-mono text-blue-400 font-bold bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-900/30">
                                   SOLICITATION: {bid.solicitationNumber}
                                 </span>
-                                <h4 className="text-white text-xs font-semibold leading-snug pt-1">{bid.title}</h4>
+                                <h4 className="text-white text-sm font-semibold leading-snug pt-1">{bid.title}</h4>
                                 <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-slate-400 font-mono">
                                   <span>{bid.agency}</span>
                                   <span className="text-slate-605">•</span>
@@ -1027,7 +1152,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                               </div>
                               
                               <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 shrink-0 self-stretch sm:self-auto border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0">
-                                <span className="text-[9px] text-slate-500 font-mono">Posted: {bid.postedDate}</span>
+                                <span className="text-[9px] text-slate-400 font-mono">Posted: {bid.postedDate}</span>
                                 <a 
                                   href={bid.link} 
                                   target="_blank" 
@@ -1047,20 +1172,97 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                             </div>
                           ))
                         ) : (
-                          <p className="text-slate-500 text-xs italic font-mono text-center py-4">No government RFPs recorded for this query.</p>
+                          <p className="text-slate-400 text-sm italic font-mono text-center py-4">No government RFPs recorded for this query.</p>
                         )}
+                        
+                        {!isPremium && bids.length > 1 && (
+                          <div className="py-8 flex flex-col items-center justify-center text-center bg-slate-950/40 rounded-b-xl border border-white/5 mt-2">
+                            <Lock className="h-6 w-6 text-indigo-400 mb-2" />
+                            <h5 className="text-white font-bold text-sm">+{bids.length - 1} Gov Contracts Hidden</h5>
+                            <p className="text-xs text-slate-400 mt-1.5 max-w-xs text-center">Unlock Premium to view unlisted contracts, secure automated AI-drafted RFP proposals, and out-bid competitors.</p>
+                            <a href="#pricing" className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold font-mono transition-colors shadow-lg shadow-indigo-500/20">
+                              UNLOCK RFP DATABASE
+                            </a>
+                          </div>
+                        )}
+                        <div className="pt-3 border-t border-slate-800/60 mt-1">
+                          <button className="w-full relative group overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300 py-3.5">
+                            <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                            <div className="flex items-center justify-center gap-2 font-display font-black tracking-wide text-xs sm:text-sm uppercase">
+                              <Award className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
+                              AUTO-DRAFT BID PROPOSALS • SECURE GOV CONTRACTS
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeFeedTab === 'real_estate' && (
+                      <div className="space-y-4 animate-fade-in relative">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-white text-sm font-bold flex items-center">
+                            <MapPin className="h-4 w-4 text-amber-400 mr-2" />
+                            Recent Real Estate Transactions
+                          </h4>
+                          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-[10px] font-mono rounded border border-amber-500/20">
+                            HIGH LEAD POTENTIAL
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+                          New homeowners are <strong>4x more likely</strong> to contract large-scale renovations, {scannedData?.industry} upgrades, and system checks within their first 60 days of closing.
+                        </p>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                          {[
+                            { addr: `1024 Elm Street, ${scannedData?.city}`, date: 'Just Sold (2 days ago)', price: '$540,000', year: 'Built 1982' },
+                            { addr: `4492 Maple Dr, ${scannedData?.city}`, date: 'Just Sold (5 days ago)', price: '$615,000', year: 'Built 1995' },
+                            { addr: `782 Pine Ln, ${scannedData?.city}`, date: 'Pending Sale', price: '$425,000', year: 'Built 1978' },
+                            { addr: `1105 Oak Ave, ${scannedData?.city}`, date: 'Just Sold (1 week ago)', price: '$720,000', year: 'Built 2001' }
+                          ].slice(0, isPremium ? 4 : 2).map((rel, idx) => (
+                            <div key={idx} className={`bg-slate-900/40 border border-slate-800 p-3 rounded-lg hover:border-slate-700 transition-colors ${!isPremium && idx === 1 ? 'blur-sm select-none' : ''}`}>
+                              <div className="text-xs font-bold text-slate-200 truncate">{rel.addr}</div>
+                              <div className="flex justify-between items-end mt-2">
+                                <div className="space-y-0.5">
+                                  <div className="text-[10px] font-mono text-amber-400">{rel.date}</div>
+                                  <div className="text-[10px] text-slate-500">{rel.year}</div>
+                                </div>
+                                <div className="text-xs font-mono font-bold text-slate-300">{rel.price}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {!isPremium && (
+                          <div className="absolute inset-0 top-1/2 flex flex-col items-center justify-center bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pt-6 rounded-b-lg">
+                            <Lock className="h-6 w-6 text-amber-500 mb-2" />
+                            <h5 className="text-white font-bold text-sm">+1,400 Recent Closings Hidden</h5>
+                            <p className="text-xs text-slate-400 mt-1.5 max-w-xs text-center">Unlock Premium to reveal all unlisted pre-foreclosures, pending sales & exact household targets.</p>
+                            <a href="#pricing" className="mt-4 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold font-mono transition-colors shadow-lg shadow-amber-500/20">
+                              UNLOCK ALL
+                            </a>
+                          </div>
+                        )}
+                        <div className="mt-4 pt-1">
+                          <button className="w-full relative group overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all duration-300 py-3.5">
+                            <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                            <div className="flex items-center justify-center gap-2 font-display font-black tracking-wide text-xs sm:text-sm uppercase">
+                              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
+                              MAIL NEW HOMEOWNERS • EST. 12% CONVERSION RATE
+                            </div>
+                          </button>
+                        </div>
                       </div>
                     )}
 
                     {activeFeedTab === 'permits' && (
-                      <div className="divide-y divide-white/5">
+                      <div className="divide-y divide-white/5 relative">
                         {permits.length > 0 ? (
-                          permits.map((per, idx) => (
-                            <div key={idx} className="py-3 first:pt-0 last:pb-0 flex flex-col md:flex-row justify-between md:items-start gap-3 text-xs leading-normal">
+                          (isPremium ? permits : permits.slice(0, 1)).map((per, idx) => (
+                            <div key={idx} className="py-3 first:pt-0 last:pb-0 flex flex-col md:flex-row justify-between md:items-start gap-3 text-sm leading-normal">
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                   <span className="font-mono text-[10px] font-bold text-white">{per.permitNumber}</span>
-                                  <span className="text-slate-600">|</span>
+                                  <span className="text-slate-300">|</span>
                                   <span className="text-[10px] text-slate-450 font-medium">{per.permitType}</span>
                                 </div>
                                 <p className="text-[11px] text-slate-400 italic font-sans">{per.description}</p>
@@ -1068,7 +1270,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                               
                               <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-1.5 shrink-0 select-none">
                                 {per.estimatedValue && (
-                                  <span className="font-mono text-xs text-emerald-400 font-bold">
+                                  <span className="font-mono text-sm text-emerald-400 font-bold">
                                     ${per.estimatedValue.toLocaleString()}
                                   </span>
                                 )}
@@ -1083,8 +1285,28 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                             </div>
                           ))
                         ) : (
-                          <p className="text-slate-500 text-xs italic font-mono text-center py-4">No recent permits cataloged.</p>
+                          <p className="text-slate-400 text-sm italic font-mono text-center py-4">No recent permits cataloged.</p>
                         )}
+                        
+                        {!isPremium && permits.length > 1 && (
+                          <div className="py-8 flex flex-col items-center justify-center text-center bg-slate-950/40 rounded-b-xl border border-white/5 mt-2">
+                            <Lock className="h-6 w-6 text-purple-400 mb-2" />
+                            <h5 className="text-white font-bold text-sm">+{permits.length - 1} Permits Hidden</h5>
+                            <p className="text-xs text-slate-400 mt-1.5 max-w-xs text-center">Unlock Premium to intercept unlisted commercial build-outs & direct-mail high value municipal sites.</p>
+                            <a href="#pricing" className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold font-mono transition-colors shadow-lg shadow-purple-500/20">
+                              UNLOCK PERMIT DATABASE
+                            </a>
+                          </div>
+                        )}
+                        <div className="pt-4 border-t border-slate-800/60 mt-2">
+                          <button className="w-full relative group overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-300 py-3.5">
+                            <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                            <div className="flex items-center justify-center gap-2 font-display font-black tracking-wide text-xs sm:text-sm uppercase">
+                              <Database className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
+                              INTERCEPT OPEN PERMITS • TARGET $5M+ MARKET
+                            </div>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

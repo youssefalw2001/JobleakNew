@@ -135,12 +135,12 @@ export default function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 text-slate-800">
+    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 text-slate-200">
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden relative"
+        className="bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 w-full max-w-lg overflow-hidden relative"
       >
         {/* Decorative Top Bar */}
         <div className="h-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500" />
@@ -152,18 +152,18 @@ export default function CheckoutModal({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center p-8 text-center"
+              className="absolute inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-8 text-center"
             >
               <motion.div 
                 initial={{ scale: 0.6, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
-                className="w-20 h-20 bg-emerald-50 text-emerald-600 border-2 border-emerald-300 rounded-2xl flex items-center justify-center shadow-lg mb-6"
+                className="w-20 h-20 bg-emerald-500/10 text-emerald-400 border-2 border-emerald-500/30 rounded-2xl flex items-center justify-center shadow-lg mb-6"
               >
                 <Check className="h-10 w-10 stroke-[3px]" />
               </motion.div>
-              <h3 className="text-2xl font-display font-extrabold text-slate-900 tracking-tight">Payment Approved!</h3>
-              <p className="text-sm text-slate-500 font-mono mt-2">Transaction ID: TXN-{Math.random().toString(36).substring(2, 10).toUpperCase()}</p>
-              <p className="text-xs text-blue-600 font-mono font-bold bg-blue-50 border border-blue-200 px-3 py-1 mt-4 rounded-full">
+              <h3 className="text-2xl font-display font-extrabold text-white tracking-tight">Payment Approved!</h3>
+              <p className="text-sm text-slate-400 font-mono mt-2">Transaction ID: TXN-{Math.random().toString(36).substring(2, 10).toUpperCase()}</p>
+              <p className="text-sm text-blue-400 font-mono font-bold bg-blue-500/10 border border-blue-500/20 px-3 py-1 mt-4 rounded-full">
                 Contractor Territory Locked
               </p>
             </motion.div>
@@ -174,31 +174,31 @@ export default function CheckoutModal({
           {/* Header */}
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-xl font-display font-extrabold text-slate-950 tracking-tight flex items-center gap-1.5">
-                <CreditCard className="h-5 w-5 text-blue-600" /> Secure Checkout
+              <h2 className="text-xl font-display font-extrabold text-white tracking-tight flex items-center gap-1.5">
+                <CreditCard className="h-5 w-5 text-blue-400" /> Secure Checkout
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-sm text-slate-400 mt-1">
                 Establish regional exclusivity and lock in weather triggers.
               </p>
             </div>
             
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all font-bold cursor-pointer"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all font-bold cursor-pointer"
             >
               ✕
             </button>
           </div>
 
           {/* Pricing Summary Widget */}
-          <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center justify-between">
+          <div className="bg-slate-950/50 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-mono font-bold text-slate-400 block uppercase tracking-widest">SELECTED MEMBERSHIP</span>
-              <span className="text-sm font-display font-extrabold text-slate-900">{planName} Plan Exclusive</span>
+              <span className="text-sm font-display font-extrabold text-slate-100">{planName} Plan Exclusive</span>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-250 border-blue-200">ACTIVE RATE</span>
-              <span className="text-xl font-display font-black text-slate-950 block mt-0.5 font-mono">${price}<span className="text-xs text-slate-500 font-normal">/mo</span></span>
+              <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">ACTIVE RATE</span>
+              <span className="text-xl font-display font-black text-white block mt-0.5 font-mono">${price}<span className="text-sm text-slate-400 font-normal">/mo</span></span>
             </div>
           </div>
 
@@ -210,7 +210,7 @@ export default function CheckoutModal({
               }`}
             >
               {/* Overlay Glassmorphism Pattern */}
-              <div className="absolute inset-0 bg-white/5 opacity-45 pointer-events-none saas-grid-bg" />
+              <div className="absolute inset-0 bg-slate-900/5 opacity-45 pointer-events-none saas-grid-bg" />
               
               {!isFocusedOnCvc ? (
                 <>
@@ -223,7 +223,7 @@ export default function CheckoutModal({
                         <div className="w-4 h-full bg-slate-950/10 border-l border-r border-amber-900/10" />
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-black tracking-widest bg-white/10 px-2 py-1 rounded border border-white/15">
+                    <span className="text-sm font-mono font-black tracking-widest bg-slate-900/10 px-2 py-1 rounded border border-white/15">
                       {cardBrand}
                     </span>
                   </div>
@@ -237,13 +237,13 @@ export default function CheckoutModal({
                   <div className="flex justify-between items-end relative z-10">
                     <div>
                       <span className="text-[7px] uppercase font-mono tracking-wider font-extrabold text-slate-450 block">CARDHOLDER</span>
-                      <p className="text-xs uppercase font-mono font-bold tracking-wider max-w-[170px] truncate">
+                      <p className="text-sm uppercase font-mono font-bold tracking-wider max-w-[170px] truncate">
                         {cardholder || 'YOUR FULL NAME'}
                       </p>
                     </div>
                     <div className="text-right">
                       <span className="text-[7px] uppercase font-mono tracking-wider font-extrabold text-slate-450 block">EXPIRES</span>
-                      <p className="text-xs font-mono font-bold">{expiry || 'MM/YY'}</p>
+                      <p className="text-sm font-mono font-bold">{expiry || 'MM/YY'}</p>
                     </div>
                   </div>
                 </>
@@ -253,11 +253,11 @@ export default function CheckoutModal({
                   <div className="absolute top-6 left-0 right-0 h-9 bg-slate-800 z-10" />
                   <div className="mt-14 flex items-center justify-end gap-3 px-4 relative z-15">
                     <span className="text-[8px] uppercase font-mono font-semibold tracking-wider text-slate-400">SIGNATURE STRIP</span>
-                    <div className="bg-slate-100 text-slate-900 font-mono italic font-bold text-xs px-2.5 py-1 rounded border border-slate-300 w-16 text-right rotate-y-180">
+                    <div className="bg-slate-100 text-white font-mono italic font-bold text-sm px-2.5 py-1 rounded border border-slate-600 w-16 text-right rotate-y-180">
                       {cvc || '•••'}
                     </div>
                   </div>
-                  <div className="text-right pr-4 pb-1 font-mono text-[8px] text-slate-500 uppercase tracking-widest leading-none rotate-y-180">
+                  <div className="text-right pr-4 pb-1 font-mono text-[8px] text-slate-400 uppercase tracking-widest leading-none rotate-y-180">
                     CVV Security Verification
                   </div>
                 </>
@@ -270,7 +270,7 @@ export default function CheckoutModal({
             
             {/* Cardholder Name */}
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Name on Card
               </label>
               <input
@@ -279,24 +279,24 @@ export default function CheckoutModal({
                 value={cardholder}
                 onChange={(e) => { setCardholder(e.target.value); setErrorMsg(null); }}
                 placeholder="e.g. Michael J. Scott"
-                className="w-full bg-slate-50 border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-600 focus:bg-white text-slate-900 font-sans"
+                className="w-full bg-slate-950/50 border border-slate-800 text-sm px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-slate-950 text-white font-sans"
               />
             </div>
 
             {/* Card Number */}
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Card Number
               </label>
               <div className="relative">
-                <CreditCard className="absolute left-3.5 top-3 h-4 w-4 text-slate-405 text-slate-400" />
+                <CreditCard className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   required
                   value={cardNumber}
                   onChange={handleCardNumberChange}
                   placeholder="4242 4242 4242 4242"
-                  className="w-full bg-slate-50 border border-slate-200 text-xs pl-10 pr-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-600 focus:bg-white text-slate-900 font-mono"
+                  className="w-full bg-slate-950/50 border border-slate-800 text-sm pl-10 pr-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-slate-950 text-white font-mono"
                 />
               </div>
             </div>
@@ -304,7 +304,7 @@ export default function CheckoutModal({
             {/* Nested Fields */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
                   Expiry Date
                 </label>
                 <input
@@ -313,12 +313,12 @@ export default function CheckoutModal({
                   value={expiry}
                   onChange={handleExpiryChange}
                   placeholder="MM/YY"
-                  className="w-full bg-slate-50 border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-600 focus:bg-white text-slate-900 font-mono text-center"
+                  className="w-full bg-slate-950/50 border border-slate-800 text-sm px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-slate-950 text-white font-mono text-center"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
                   CVC / CVV
                 </label>
                 <input
@@ -329,12 +329,12 @@ export default function CheckoutModal({
                   onFocus={() => setIsFocusedOnCvc(true)}
                   onBlur={() => setIsFocusedOnCvc(false)}
                   placeholder="•••"
-                  className="w-full bg-slate-50 border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-600 focus:bg-white text-slate-900 font-mono text-center"
+                  className="w-full bg-slate-950/50 border border-slate-800 text-sm px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-slate-950 text-white font-mono text-center"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
                   Billing ZIP
                 </label>
                 <input
@@ -343,22 +343,22 @@ export default function CheckoutModal({
                   value={zip}
                   onChange={handleZipChange}
                   placeholder="78701"
-                  className="w-full bg-slate-50 border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-600 focus:bg-white text-slate-900 font-mono text-center"
+                  className="w-full bg-slate-950/50 border border-slate-800 text-sm px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-slate-950 text-white font-mono text-center"
                 />
               </div>
             </div>
 
             {errorMsg && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-xl font-mono font-bold text-center">
+              <div className="bg-red-950/30 border border-red-900/50 text-red-400 text-sm p-3 rounded-xl font-mono font-bold text-center">
                 {errorMsg}
               </div>
             )}
 
             {/* Stripe info disclosure */}
-            <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-200 text-[10px] text-slate-500 flex items-start gap-2 leading-relaxed">
-              <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+            <div className="bg-slate-950/50 p-3.5 rounded-xl border border-slate-800 text-[10px] text-slate-400 flex items-start gap-2 leading-relaxed">
+              <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-slate-700 font-bold">Safe Simulator Mode</strong>: In production, Stripe is implemented on the backend (`STRIPE_SECRET_KEY`) proxying token sessions over SSL. This prevents client credentials from being exposed in browser logs.
+                <strong className="text-slate-300 font-bold">Safe Simulator Mode</strong>: In production, Stripe is implemented on the backend (`STRIPE_SECRET_KEY`) proxying token sessions over SSL. This prevents client credentials from being exposed in browser logs.
               </div>
             </div>
 
@@ -366,7 +366,7 @@ export default function CheckoutModal({
             <button
               type="submit"
               disabled={processing}
-              className="w-full py-3.5 bg-blue-645 bg-blue-600 hover:bg-blue-700 text-white font-display font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-display font-bold text-sm uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50"
             >
               {processing ? (
                 <>

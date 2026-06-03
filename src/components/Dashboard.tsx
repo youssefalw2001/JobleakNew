@@ -60,10 +60,19 @@ export default function Dashboard() {
 
   // Log Out operation
   const handleLogout = () => {
-    saveActiveSession(null);
-    setCurrentUser(null);
-    window.location.hash = '#home';
-    window.location.reload();
+    import('../firebase').then(({ auth }) => {
+      auth.signOut().then(() => {
+        saveActiveSession(null);
+        setCurrentUser(null);
+        window.location.hash = '#home';
+        window.location.reload();
+      });
+    }).catch(() => {
+      saveActiveSession(null);
+      setCurrentUser(null);
+      window.location.hash = '#home';
+      window.location.reload();
+    });
   };
 
   // Quick submit handler to record a customized inbound call log for the active user
@@ -198,14 +207,14 @@ export default function Dashboard() {
               <span className="px-2.5 py-0.5 rounded font-mono text-[9px] font-extrabold uppercase bg-blue-600 text-white">
                 {userPlan} Membership Profile
               </span>
-              <span className="text-slate-400 font-mono text-xs">• Workspace Session Verified</span>
+              <span className="text-slate-400 font-mono text-sm">• Workspace Session Verified</span>
             </div>
             
             <h2 className="text-2xl font-display font-black text-white tracking-tight flex items-center gap-2">
               <span>{currentUser.businessName || 'Active Dispatch'} Command Dashboard</span>
             </h2>
             
-            <div className="text-xs text-slate-400 font-mono flex flex-wrap gap-x-4 gap-y-1 items-center">
+            <div className="text-sm text-slate-400 font-mono flex flex-wrap gap-x-4 gap-y-1 items-center">
               <span className="flex items-center text-blue-400">
                 <MapPin className="h-3.5 w-3.5 mr-1 text-blue-505" />
                 Target Region: <strong>{currentUser.city}</strong>
@@ -225,7 +234,7 @@ export default function Dashboard() {
           <div className="mt-4 md:mt-0 relative z-10 flex shrink-0 space-x-2">
             <button
               onClick={() => setShowLogForm(!showLogForm)}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer shadow"
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold text-sm uppercase tracking-wider rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer shadow"
             >
               <PlusCircle className="h-4 w-4" />
               <span>Log Manual Call</span>
@@ -234,7 +243,7 @@ export default function Dashboard() {
             <button
               id="dashboard-logout-action"
               onClick={handleLogout}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-red-950 hover:text-red-300 text-slate-300 font-mono font-bold text-xs uppercase tracking-wider rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer border border-slate-700/80"
+              className="px-4 py-2.5 bg-slate-800 hover:bg-red-950 hover:text-red-300 text-slate-300 font-mono font-bold text-sm uppercase tracking-wider rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer border border-slate-700/80"
             >
               <LogOut className="h-4 w-4" />
               <span>Log Out</span>
@@ -242,35 +251,37 @@ export default function Dashboard() {
           </div>
         </div>
       ) : (
-        /* GUEST TRIAL BANNER WARNING */
-        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between shadow-sm">
-          <div className="space-y-1">
-            <h3 className="font-display font-bold text-lg">Viewing Sandbox Shared Intelligence</h3>
-            <p className="text-xs text-amber-700 max-w-2xl leading-relaxed">
-              You are currently browsing the generic demonstrator dashboard. Sign up or log into a personalized account to bind custom billing invoices, track trade parameters, and record secure client communications isolated strictly to your account.
-            </p>
+        <>
+          {/* GUEST BANNER */}
+          <div className="bg-slate-900 border border-slate-800 text-slate-300 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between shadow-sm">
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-lg text-white">Welcome to JobLeak Command Center</h3>
+              <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                Log into a personalized account to bind custom billing invoices, track trade parameters, and record secure client communications isolated strictly to your account.
+              </p>
+            </div>
+            <a
+              href="#login"
+              className="mt-4 md:mt-0 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-mono font-bold uppercase tracking-wider rounded-lg transition-all select-none border border-blue-500"
+            >
+              Authenticate Profile
+            </a>
           </div>
-          <a
-            href="#login"
-            className="mt-4 md:mt-0 px-4 py-2.5 bg-slate-900 hover:bg-slate-950 text-white text-xs font-mono font-bold uppercase tracking-wider rounded-lg transition-all select-none"
-          >
-            Authenticate Profile
-          </a>
-        </div>
+        </>
       )}
 
       {/* DYNAMIC EXPANDING MANUAL CALL RECORDER FORM */}
       {showLogForm && currentUser && (
-        <form onSubmit={handleAddCallLog} className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4 animate-fade-in">
-          <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-            <h3 className="font-display font-bold text-sm text-slate-950 flex items-center gap-1.5">
+        <form onSubmit={handleAddCallLog} className="bg-slate-900/50 border border-slate-700 rounded-2xl p-6 space-y-4 animate-fade-in">
+          <div className="flex justify-between items-center border-b border-slate-700 pb-2">
+            <h3 className="font-display font-bold text-sm text-white flex items-center gap-1.5">
               <Plus className="h-4.5 w-4.5 text-blue-600" />
               Record Inbound/Outbound Call Conversation
             </h3>
             <button
               type="button"
               onClick={() => setShowLogForm(false)}
-              className="text-xs text-slate-450 hover:text-slate-800 font-mono font-bold"
+              className="text-sm text-slate-450 hover:text-slate-100 font-mono font-bold"
             >
               ✕ Collapse
             </button>
@@ -278,7 +289,7 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase text-slate-500 mb-1.5">
+              <label className="block text-[10px] font-mono font-bold uppercase text-slate-400 mb-1.5">
                 Client / Caller Name
               </label>
               <input
@@ -287,18 +298,18 @@ export default function Dashboard() {
                 value={newCallerName}
                 onChange={(e) => setNewCallerName(e.target.value)}
                 placeholder="e.g. Martha Jenkins (Property Manager)"
-                className="w-full bg-white border border-slate-300 text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:bg-white text-slate-900 font-sans"
+                className="w-full bg-slate-900 border border-slate-600 text-sm px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:bg-slate-900 text-white font-sans"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase text-slate-500 mb-1.5">
+              <label className="block text-[10px] font-mono font-bold uppercase text-slate-400 mb-1.5">
                 Call Direction Channel
               </label>
               <select
                 value={newCallStatus}
                 onChange={(e) => setNewCallStatus(e.target.value as any)}
-                className="w-full bg-white border border-slate-300 text-xs px-2 px-2.5 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 text-slate-900"
+                className="w-full bg-slate-900 border border-slate-600 text-sm px-2 px-2.5 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 text-white"
               >
                 <option value="Inbound">Inbound Dial (Homeowner Lead)</option>
                 <option value="Outbound">Outbound Follow-up</option>
@@ -306,7 +317,7 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase text-slate-500 mb-1.5">
+              <label className="block text-[10px] font-mono font-bold uppercase text-slate-400 mb-1.5">
                 Brief Call Log Coordinates / Notes
               </label>
               <input
@@ -314,7 +325,7 @@ export default function Dashboard() {
                 value={newCallNotes}
                 onChange={(e) => setNewCallNotes(e.target.value)}
                 placeholder="e.g. High storm leak reported. Booked inspection diagnostic at $99 fee."
-                className="w-full bg-white border border-slate-300 text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:bg-white text-slate-900 font-sans"
+                className="w-full bg-slate-900 border border-slate-600 text-sm px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:bg-slate-900 text-white font-sans"
               />
             </div>
           </div>
@@ -322,7 +333,7 @@ export default function Dashboard() {
           <div className="flex justify-end pt-2">
             <button
               type="submit"
-              className="px-5 py-2 bg-slate-900 hover:bg-slate-950 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
+              className="px-5 py-2 bg-slate-900 hover:bg-slate-950 text-white font-mono font-bold text-sm uppercase tracking-wider rounded-lg transition-all"
             >
               Add Call to My Account
             </button>
@@ -340,12 +351,12 @@ export default function Dashboard() {
             <span className="p-1 rounded bg-blue-50 text-blue-600"><TrendingUp className="h-4 w-4" /></span>
           </div>
           
-          <h3 className="text-3xl font-display font-black text-slate-950">
+          <h3 className="text-3xl font-display font-black text-white">
             ${dynamicBillings.toLocaleString()}
           </h3>
           
-          <p className="text-[11px] text-slate-505 text-slate-500 font-sans">
-            Calculated at <strong className="text-slate-900 font-mono">${averageContractValue} avg</strong> per active lead dial.
+          <p className="text-[11px] text-slate-505 text-slate-400 font-sans">
+            Calculated at <strong className="text-white font-mono">${averageContractValue} avg</strong> per active lead dial.
           </p>
         </div>
 
@@ -356,11 +367,11 @@ export default function Dashboard() {
             <span className="p-1 rounded bg-indigo-50 text-indigo-600"><Users className="h-4 w-4" /></span>
           </div>
           
-          <h3 className="text-3xl font-display font-black text-slate-950">
+          <h3 className="text-3xl font-display font-black text-white">
             {currentUser ? currentUser.loggedCalls.length : 12}
           </h3>
           
-          <p className="text-[11px] text-slate-500 font-sans">
+          <p className="text-[11px] text-slate-400 font-sans">
             {currentUser ? 'Recorded specifically under your profile.' : 'Total simulated contractor calls.'}
           </p>
         </div>
@@ -372,11 +383,11 @@ export default function Dashboard() {
             <span className="p-1 rounded bg-emerald-50 text-emerald-600"><TrendingUp className="h-4 w-4" /></span>
           </div>
           
-          <h3 className="text-3xl font-display font-black text-slate-950">
+          <h3 className="text-3xl font-display font-black text-white">
             ${currentUser ? currentUser.adSpendSaved.toLocaleString() : '1,450'}
           </h3>
           
-          <p className="text-[11px] text-slate-500 font-sans text-emerald-700">
+          <p className="text-[11px] text-slate-400 font-sans text-emerald-700">
             ✓ Blocked wasteful broad keywords.
           </p>
         </div>
@@ -388,12 +399,12 @@ export default function Dashboard() {
             <span className="p-1 rounded bg-slate-150 text-slate-705"><Activity className="h-4 w-4" /></span>
           </div>
           
-          <h3 className="text-xl font-display font-black text-slate-955 text-slate-900 uppercase tracking-tight py-1 pt-2">
+          <h3 className="text-xl font-display font-black text-slate-955 text-white uppercase tracking-tight py-1 pt-2">
             {userPlan} Active
           </h3>
           
-          <p className="text-[11px] text-slate-500 font-sans">
-            Matched region: <strong className="text-slate-800 font-mono font-bold">{currentUser ? currentUser.city : 'All Metros'}</strong>
+          <p className="text-[11px] text-slate-400 font-sans">
+            Matched region: <strong className="text-slate-100 font-mono font-bold">{currentUser ? currentUser.city : 'All Metros'}</strong>
           </p>
         </div>
 
@@ -406,19 +417,19 @@ export default function Dashboard() {
         <div className="lg:col-span-6 bento-card p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h3 className="font-display font-extrabold text-lg text-slate-950">My Inbound Communications Log</h3>
-              <p className="text-[11px] text-slate-500 font-mono">Isolated strictly to your current logged account session</p>
+              <h3 className="font-display font-extrabold text-lg text-white">My Inbound Communications Log</h3>
+              <p className="text-[11px] text-slate-400 font-mono">Isolated strictly to your current logged account session</p>
             </div>
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-mono font-bold rounded uppercase">
-              {currentUser ? `${currentUser.loggedCalls.length} logs` : 'Sandbox Trial'}
+            <span className="px-2 py-0.5 bg-blue-100/10 border border-blue-500/30 text-blue-400 text-[10px] font-mono font-bold rounded uppercase">
+              {currentUser ? `${currentUser.loggedCalls.length} logs` : 'Sample Data'}
             </span>
           </div>
 
           {currentUser ? (
             currentUser.loggedCalls.length === 0 ? (
-              <div className="text-center py-12 space-y-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              <div className="text-center py-12 space-y-3 bg-slate-900/50/50 rounded-xl border border-dashed border-slate-700">
                 <Smartphone className="h-10 w-10 text-slate-350 mx-auto animate-pulse" />
-                <h4 className="text-xs font-bold font-mono text-slate-650">No Captured Communications Available</h4>
+                <h4 className="text-sm font-bold font-mono text-slate-650">No Captured Communications Available</h4>
                 <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
                   Click the <strong>"Log Manual Call"</strong> tab above to record conversation details and view instant math computations.
                 </p>
@@ -426,7 +437,7 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
                 {currentUser.loggedCalls.map((call) => (
-                  <div key={call.id} className="bg-slate-50 border border-slate-150 rounded-xl p-4 flex items-start justify-between hover:border-slate-300 transition-colors">
+                  <div key={call.id} className="bg-slate-900/50 border border-slate-150 rounded-xl p-4 flex items-start justify-between hover:border-slate-600 transition-colors">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-black uppercase ${
@@ -434,12 +445,12 @@ export default function Dashboard() {
                         }`}>
                           {call.status}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-mono">
+                        <span className="text-[10px] text-slate-400 font-mono">
                           {new Date(call.timestamp).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
                         </span>
                       </div>
                       
-                      <p className="text-xs font-semibold text-slate-800">{call.notes}</p>
+                      <p className="text-sm font-semibold text-slate-100">{call.notes}</p>
                       
                       <div className="text-[9px] font-mono text-slate-400">
                         Signal: {call.city} • {call.industry} Services Trade
@@ -458,12 +469,12 @@ export default function Dashboard() {
               </div>
             )
           ) : (
-            /* TRIAL PREVIEW IF THE USER IS OUT */
+            /* PREVIEW IF THE USER IS OUT */
             <div className="space-y-3.5">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-505 text-slate-500 flex flex-col justify-center text-center space-y-2">
+              <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700 text-sm text-slate-505 text-slate-400 flex flex-col justify-center text-center space-y-2">
                 <p>Authentic call recordings are initialized empty upon registration, ensuring your customers remain 100% private and protected from public view.</p>
-                <div className="bg-slate-100 p-3 rounded font-mono text-[10px] text-slate-650 text-left leading-normal border border-slate-200">
-                  <strong className="text-slate-800 uppercase text-[9px] block mb-1">Standard Fallback View (Trial Only):</strong>
+                <div className="bg-slate-900 p-3 rounded font-mono text-[10px] text-slate-400 text-left leading-normal border border-slate-700">
+                  <strong className="text-slate-100 uppercase text-[9px] block mb-1">Standard Preview Data:</strong>
                   • Inbound Call: Alex Jenkins HVAC Repairs Austin (Completed)<br />
                   • Outbound Dial: Austin Roof Damage (Awaiting Followup)
                 </div>
@@ -476,16 +487,16 @@ export default function Dashboard() {
         <div className="lg:col-span-6 bento-card p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h3 className="font-display font-extrabold text-lg text-slate-950">Billing History & Dynamic Invoices</h3>
-              <p className="text-[11px] text-slate-500 font-mono">Real subscription invoices corresponding to your registered tier</p>
+              <h3 className="font-display font-extrabold text-lg text-white">Billing History & Dynamic Invoices</h3>
+              <p className="text-[11px] text-slate-400 font-mono">Real subscription invoices corresponding to your registered tier</p>
             </div>
-            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold rounded uppercase">
+            <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded uppercase">
               {currentUser ? 'SECURE ACCOUNT' : 'PREVIEW'}
             </span>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-slate-400 text-[9px] font-mono uppercase tracking-wider">
                   <th className="py-2.5 px-3">Invoice No.</th>
@@ -495,17 +506,17 @@ export default function Dashboard() {
                   <th className="py-2.5 px-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="divide-y divide-slate-100 text-slate-200">
                 {currentUser ? (
                   currentUser.billingHistory.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors font-mono">
-                      <td className="py-3 px-3 font-bold text-slate-900 flex items-center gap-1.5">
+                    <tr key={inv.id} className="hover:bg-slate-900/50/50 transition-colors font-mono">
+                      <td className="py-3 px-3 font-bold text-white flex items-center gap-1.5">
                         <FileText className="h-3.5 w-3.5 text-slate-450 text-slate-400 shrink-0" />
                         <span>{inv.invoiceNo}</span>
                       </td>
-                      <td className="py-3 px-3 text-slate-500">{inv.date}</td>
-                      <td className="py-3 px-3 font-sans text-slate-800">{inv.plan}</td>
-                      <td className="py-3 px-3 font-bold text-slate-900">${inv.amount} USD</td>
+                      <td className="py-3 px-3 text-slate-400">{inv.date}</td>
+                      <td className="py-3 px-3 font-sans text-slate-100">{inv.plan}</td>
+                      <td className="py-3 px-3 font-bold text-white">${inv.amount} USD</td>
                       <td className="py-3 px-3">
                         <span className={`px-1.5 py-0.5 text-[9px] rounded font-mono font-semibold uppercase ${
                           inv.status === 'Paid' 
@@ -518,16 +529,16 @@ export default function Dashboard() {
                     </tr>
                   ))
                 ) : (
-                  /* TRIAL MOCK INVOICE PREVIEW */
+                  /* MOCK INVOICE PREVIEW */
                   <>
-                    <tr className="font-mono text-slate-550">
-                      <td className="py-3 px-3 font-bold text-slate-900">INV-2026-TRIAL</td>
+                    <tr className="font-mono text-slate-400 border-b border-slate-800">
+                      <td className="py-3 px-3 font-bold text-white">INV-2026-001</td>
                       <td className="py-3 px-3">02 June 2026</td>
-                      <td className="py-3 px-3 font-sans">SaaS Mock Demo</td>
-                      <td className="py-3 px-3 font-bold text-slate-900">$0 USD</td>
+                      <td className="py-3 px-3 font-sans text-slate-200">Pro Membership</td>
+                      <td className="py-3 px-3 font-bold text-white">$499 USD</td>
                       <td className="py-3 px-3">
-                        <span className="px-1.5 py-0.5 text-[8px] bg-slate-100 text-slate-655 uppercase font-mono font-semibold rounded">
-                          SIMULATOR ONLY
+                        <span className="px-1.5 py-0.5 text-[9px] bg-emerald-500/10 text-emerald-400 uppercase font-mono font-semibold rounded border border-emerald-500/30">
+                          PAID
                         </span>
                       </td>
                     </tr>
@@ -537,7 +548,7 @@ export default function Dashboard() {
             </table>
           </div>
 
-          <div className="p-3 bg-blue-50/40 border border-blue-105 border-blue-100 rounded-lg text-[11px] leading-relaxed text-slate-600">
+          <div className="p-3 bg-blue-50/40 border border-blue-105 border-blue-100 rounded-lg text-[11px] leading-relaxed text-slate-300">
             <h5 className="font-bold text-blue-900 uppercase text-[9px] tracking-wide mb-0.5">Note on isolated security:</h5>
             We encrypt financial parameters using secure sandbox frameworks. Your actual credit card charges will never be listed publicly to other visitors.
           </div>
@@ -549,25 +560,25 @@ export default function Dashboard() {
       <div className="bento-card p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
-            <h3 className="font-display font-black text-lg text-slate-950 flex items-center gap-1.5">
+            <h3 className="font-display font-black text-lg text-white flex items-center gap-1.5">
               <Award className="h-5 w-5 text-blue-600" />
               Contractor Leads Intelligence Feed
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm text-slate-400">
               {currentUser 
                 ? `System filtered precisely for ${currentUser.city} and ${currentUser.industry} service requests` 
                 : 'Broad geocoded stream matches regional public bids'}
             </p>
           </div>
-          <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-[10px] font-mono font-bold rounded">
+          <span className="px-2.5 py-1 bg-slate-100 text-slate-200 text-[10px] font-mono font-bold rounded">
             {filteredLeads.length} METRICS MATCHED
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-400 text-[9px] font-mono uppercase tracking-wider">
+              <tr className="border-b border-slate-700 text-slate-400 text-[9px] font-mono uppercase tracking-wider">
                 <th className="py-3 px-4">Business / Industry Group</th>
                 <th className="py-3 px-4">Municipal Target</th>
                 <th className="py-3 px-4">Checked/Scanned Date</th>
@@ -577,18 +588,18 @@ export default function Dashboard() {
             </thead>
             <tbody className="divide-y divide-slate-150 text-slate-750">
               {filteredLeads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={lead.id} className="hover:bg-slate-900/50/50 transition-colors">
                   <td className="py-3.5 px-4">
-                    <div className="font-bold text-slate-900">{lead.business_name}</div>
+                    <div className="font-bold text-white">{lead.business_name}</div>
                     <div className="text-[10px] text-slate-400 font-mono">{lead.industry} • {lead.email}</div>
                   </td>
-                  <td className="py-3.5 px-4 font-mono font-medium text-slate-900">
+                  <td className="py-3.5 px-4 font-mono font-medium text-white">
                     {lead.city}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-slate-500">
+                  <td className="py-3.5 px-4 font-mono text-slate-400">
                     {new Date(lead.created_at).toLocaleDateString()}
                   </td>
-                  <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate">
+                  <td className="py-3.5 px-4 text-slate-400 max-w-xs truncate">
                     {lead.goal || 'No objective specified'}
                   </td>
                   <td className="py-3.5 px-4 text-center">
