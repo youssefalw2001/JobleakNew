@@ -193,22 +193,6 @@ export default function Footer({ onRouteChange }: FooterProps) {
     </footer>
   );
 }
-            </div>
-            
-            {/* Subtle Administrator Console Link */}
-            <div className="pt-2 text-right">
-              <button 
-                id="footer-admin-link"
-                onClick={() => { onRouteChange('#admin'); window.location.hash = '#admin'; }} 
-                className="text-[9px] font-mono text-slate-400 hover:text-slate-300 underline transition-colors"
-              >
-                Access Admin Overlay Console
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Outer legal constraints footer */}
         <div className="mt-8 pt-6 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 text-[11px] font-sans">
           <span>&copy; {currentYear} JobLeak Intelligence Technologies. All rights reserved.</span>
           <div className="flex space-x-4">
