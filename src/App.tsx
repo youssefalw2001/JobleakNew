@@ -3,19 +3,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import Homepage from './components/Homepage';
-import Radar from './components/Radar';
-import Campaign from './components/Campaign';
-import Pricing from './components/Pricing';
-import ScanForm from './components/ScanForm';
-import Dashboard from './components/Dashboard';
-import Login from './components/Login';
-import AdminPortal from './components/AdminPortal';
 import { getActiveSession, saveActiveSession } from './authService';
 import CheckoutModal from './components/CheckoutModal';
+import ErrorBoundary from './components/ErrorBoundary';
+import { ToastProvider } from './components/Toast';
+import { PageLoadingOverlay } from './components/LoadingSkeletons';
+import { analytics } from './analytics';
+
+// Lazy load heavy components for better initial load performance
+const Homepage = lazy(() => import('./components/Homepage'));
+const Radar = lazy(() => import('./components/Radar'));
+const Campaign = lazy(() => import('./components/Campaign'));
+const Pricing = lazy(() => import('./components/Pricing'));
+const ScanForm = lazy(() => import('./components/ScanForm'));
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const Login = lazy(() => import('./components/Login'));
+const AdminPortal = lazy(() => import('./components/AdminPortal'));
 
 const SCANNED_DATA_CACHE_KEY = 'jobleak_scanned_data_cache';
 
@@ -51,6 +58,11 @@ export default function App() {
     const handleHashChange = () => {
       const hash = window.location.hash || '#home';
       setCurrentRoute(hash);
+      
+      // Track page view
+      const pageName = hash.replace('#', '') || 'home';
+      analytics.pageView(hash, `JobLeak - ${pageName.charAt(0).toUpperCase() + pageName.slice(1)}`);
+      
       // Automatically scroll window to top for standard high quality UX transit
       window.scrollTo(0, 0);
     };
@@ -76,6 +88,13 @@ export default function App() {
     setScannedData(dataObj);
     try {
       localStorage.setItem(SCANNED_DATA_CACHE_KEY, JSON.stringify(dataObj));
+      
+      // Track analytics event
+      analytics.track('scan_completed', {
+        city,
+        industry,
+        service: serviceText,
+      });
     } catch(e) {
       console.error('Failed to cache scanned data:', e);
     }
@@ -143,47 +162,182 @@ export default function App() {
 
   // Compute layout structure on route mapping
   const renderPage = () => {
+    const pageVariants = {
+      initial: { opacity: 0, y: 20 },
+      animate: { opacity: 1, y: 0 },
+      exit: { opacity: 0, y: -20 }
+    };
+
+    const transition = {
+      duration: 0.3,
+      ease: [0.16, 1, 0.3, 1]
+    };
+
+    // Wrap each route in Suspense for lazy loading
+    const PageWrapper = ({ children }: { children: React.ReactNode }) => (
+      <Suspense fallback={<PageLoadingOverlay message="Loading page..." />}>
+        {children}
+      </Suspense>
+    );
+
     switch (currentRoute) {
       case '#home':
       case '':
-        return <Homepage onStartInstantScan={handleStartInstantScan} onRouteChange={handleRouteChange} />;
+        return (
+          <motion.div
+            key="home"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              <Homepage onStartInstantScan={handleStartInstantScan} onRouteChange={handleRouteChange} />
+            </PageWrapper>
+          </motion.div>
+        );
       
       case '#scan':
-        return <ScanForm onScanComplete={handleScanComplete} onRouteChange={handleRouteChange} />;
+        return (
+          <motion.div
+            key="scan"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              <ScanForm onScanComplete={handleScanComplete} onRouteChange={handleRouteChange} />
+            </PageWrapper>
+          </motion.div>
+        );
       
       case '#radar':
         return (
-          <Radar 
-            scannedData={scannedData} 
-            onNavigateToCampaign={() => handleRouteChange('#campaign')} 
-            onModifyScan={() => handleRouteChange('#scan')} 
-          />
+          <motion.div
+            key="radar"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              <Radar 
+                scannedData={scannedData} 
+                onNavigateToCampaign={() => handleRouteChange('#campaign')} 
+                onModifyScan={() => handleRouteChange('#scan')} 
+              />
+            </PageWrapper>
+          </motion.div>
         );
       
       case '#campaign':
-        return <Campaign scannedData={scannedData} onNavigateToScan={() => handleRouteChange('#scan')} />;
+        return (
+          <motion.div
+            key="campaign"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              <Campaign scannedData={scannedData} onNavigateToScan={() => handleRouteChange('#scan')} />
+            </PageWrapper>
+          </motion.div>
+        );
       
       case '#pricing':
-        return <Pricing onSelectTier={handleSelectTier} />;
+        return (
+          <motion.div
+            key="pricing"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              <Pricing onSelectTier={handleSelectTier} />
+            </PageWrapper>
+          </motion.div>
+        );
       
       case '#dashboard':
-        return <Dashboard />;
+        return (
+          <motion.div
+            key="dashboard"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              <Dashboard />
+            </PageWrapper>
+          </motion.div>
+        );
       
       case '#login':
-        return isLoggedIn ? <Dashboard /> : <Login onLoginSuccess={() => setIsLoggedIn(true)} />;
+        return (
+          <motion.div
+            key="login"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              {isLoggedIn ? <Dashboard /> : <Login onLoginSuccess={() => setIsLoggedIn(true)} />}
+            </PageWrapper>
+          </motion.div>
+        );
       
       case '#admin':
-        return <AdminPortal />;
+        return (
+          <motion.div
+            key="admin"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              <AdminPortal />
+            </PageWrapper>
+          </motion.div>
+        );
       
       default:
-        return <Homepage onStartInstantScan={handleStartInstantScan} onRouteChange={handleRouteChange} />;
+        return (
+          <motion.div
+            key="default"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+            transition={transition}
+          >
+            <PageWrapper>
+              <Homepage onStartInstantScan={handleStartInstantScan} onRouteChange={handleRouteChange} />
+            </PageWrapper>
+          </motion.div>
+        );
     }
   };
 
   const isAdminRoute = currentRoute === '#admin';
 
   return (
-    <div id="jobleak-app-frame" className="min-h-screen bg-[#030712] flex flex-col justify-between font-sans text-slate-200 selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
+    <ErrorBoundary>
+      <ToastProvider>
+        <div id="jobleak-app-frame" className="min-h-screen bg-[#030712] flex flex-col justify-between font-sans text-slate-200 selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
       
       {/* Background Radial Glow Blobs */}
       <div className="absolute top-[5%] left-[-10%] w-[500px] h-[500px] rounded-full blue-glow-blob pointer-events-none z-0" />
@@ -195,7 +349,9 @@ export default function App() {
 
       {/* 2. Primary Page Render */}
       <main className="flex-grow relative z-10">
-        {renderPage()}
+        <AnimatePresence mode="wait">
+          {renderPage()}
+        </AnimatePresence>
       </main>
 
       {/* 3. Footer Frame */}
@@ -209,5 +365,7 @@ export default function App() {
         onPaymentSuccess={handlePaymentSuccess}
       />
     </div>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
