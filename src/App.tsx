@@ -23,6 +23,7 @@ const ScanForm = lazy(() => import('./components/ScanForm'));
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const Login = lazy(() => import('./components/Login'));
 const AdminPortal = lazy(() => import('./components/AdminPortal'));
+const Onboarding = lazy(() => import('./components/Onboarding'));
 
 const SCANNED_DATA_CACHE_KEY = 'jobleak_scanned_data_cache';
 
@@ -30,6 +31,7 @@ export default function App() {
   const [currentRoute, setCurrentRoute] = useState<string>('#home');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     import('./firebase').then(({ auth, handleFirestoreError }) => {
@@ -294,7 +296,19 @@ export default function App() {
             transition={transition}
           >
             <PageWrapper>
-              {isLoggedIn ? <Dashboard /> : <Login onLoginSuccess={() => setIsLoggedIn(true)} />}
+              {isLoggedIn
+                ? <Dashboard />
+                : <Login onLoginSuccess={(user) => {
+                    setIsLoggedIn(true);
+                    // Show onboarding if this is the user's first time
+                    const done = localStorage.getItem('jobleak_onboarding_done');
+                    if (!done) {
+                      setShowOnboarding(true);
+                    } else {
+                      handleRouteChange('#dashboard');
+                    }
+                  }} />
+              }
             </PageWrapper>
           </motion.div>
         );
@@ -339,6 +353,18 @@ export default function App() {
     <ErrorBoundary>
       <ToastProvider>
         <div id="jobleak-app-frame" className="min-h-screen bg-[#030712] flex flex-col justify-between font-sans text-slate-200 selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
+
+          {/* Onboarding overlay — shown once after first login */}
+          {showOnboarding && (
+            <Suspense fallback={<PageLoadingOverlay message="Loading setup..." />}>
+              <Onboarding
+                onComplete={() => {
+                  setShowOnboarding(false);
+                  handleRouteChange('#dashboard');
+                }}
+              />
+            </Suspense>
+          )}
       
       {/* Background Radial Glow Blobs */}
       <div className="absolute top-[5%] left-[-10%] w-[500px] h-[500px] rounded-full blue-glow-blob pointer-events-none z-0" />

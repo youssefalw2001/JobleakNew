@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Activity, 
   TrendingUp, 
@@ -27,11 +27,29 @@ import {
   DollarSign,
   BarChart3,
   ArrowUpRight,
-  Percent
+  Percent,
+  Flame,
+  ChevronRight,
+  RefreshCw,
+  Lock,
+  AlertTriangle,
+  CloudLightning,
+  Building2,
+  Search,
+  Radio,
+  ExternalLink
 } from 'lucide-react';
 import { getLocalLeads } from '../supabase';
 import { Lead } from '../types';
 import { getActiveSession, saveActiveSession, AuthUser, LoggedCall, BillingInvoice } from '../authService';
+import {
+  generateLiveFeed,
+  FeedOpportunity,
+  OpportunityType,
+  UrgencyLevel,
+  FEED_TYPE_CONFIG,
+  URGENCY_CONFIG,
+} from '../integrations/liveFeed';
 
 export default function Dashboard() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -43,6 +61,11 @@ export default function Dashboard() {
   const [newCallNotes, setNewCallNotes] = useState('');
   const [newCallStatus, setNewCallStatus] = useState<'Inbound' | 'Outbound'>('Inbound');
   
+  // Live intelligence feed
+  const [feed, setFeed]             = useState<FeedOpportunity[]>([]);
+  const [feedFilter, setFeedFilter] = useState<OpportunityType | 'all'>('all');
+  const [feedExpanded, setFeedExpanded] = useState<string | null>(null);
+
   // Simulated stats for fallback
   const [guestMetrics] = useState({
     activeBids: 8,
@@ -51,12 +74,15 @@ export default function Dashboard() {
 
   // Sync user context and leads on mount
   useEffect(() => {
-    // 1. Fetch active authentication session
     const session = getActiveSession();
     setCurrentUser(session);
-
-    // 2. Load geocoded local lead signals
     setLocalLeads(getLocalLeads());
+
+    // Generate live feed from profile
+    const city     = session?.city     ?? 'Austin, TX';
+    const industry = session?.industry ?? 'HVAC';
+    const plan     = session?.subscriptionPlan ?? 'Starter';
+    setFeed(generateLiveFeed(city.split(',')[0], industry, plan));
   }, []);
 
   // Update session and save to localStorage
@@ -385,6 +411,209 @@ export default function Dashboard() {
           </div>
         </form>
       )}
+
+      {/* ── LIVE INTELLIGENCE FEED ─────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"
+      >
+        {/* Feed header */}
+        <div className="border-b border-slate-800 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            {/* Live indicator */}
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
+            <div>
+              <h3 className="text-sm font-display font-black text-white">
+                Live Intelligence Feed
+              </h3>
+              <p className="text-[10px] font-mono text-slate-500 mt-0.5">
+                {currentUser
+                  ? `${currentUser.city} · ${currentUser.industry} · Updated today`
+                  : 'Monitoring your market 24/7'}
+              </p>
+            </div>
+          </div>
+
+          {/* Filter tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+            {([
+              { key: 'all',           label: 'All' },
+              { key: 'weather',       label: 'Weather' },
+              { key: 'competitor_gap',label: 'Competitors' },
+              { key: 'permit',        label: 'Permits' },
+              { key: 'fema',          label: 'FEMA' },
+              { key: 'search_spike',  label: 'Search' },
+            ] as { key: OpportunityType | 'all'; label: string }[]).map(f => (
+              <button
+                key={f.key}
+                onClick={() => setFeedFilter(f.key)}
+                className={`shrink-0 px-3 py-1.5 text-[10px] font-mono font-bold rounded-lg transition-all cursor-pointer ${
+                  feedFilter === f.key
+                    ? 'bg-blue-600/20 border border-blue-500/40 text-blue-300'
+                    : 'text-slate-600 hover:text-slate-300 border border-transparent'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Feed items */}
+        <div className="divide-y divide-slate-800/60">
+          {feed
+            .filter(item => feedFilter === 'all' || item.type === feedFilter)
+            .map((item, i) => {
+              const typeCfg    = FEED_TYPE_CONFIG[item.type];
+              const urgencyCfg = URGENCY_CONFIG[item.urgency];
+              const isLocked   = !['Starter','Growth','Pro'].includes(
+                currentUser?.subscriptionPlan ?? ''
+              ) && item.planRequired !== 'Starter';
+              const isExpanded = feedExpanded === item.id;
+              const planGated  = item.planRequired === 'Growth' && !['Growth','Pro'].includes(currentUser?.subscriptionPlan ?? '');
+
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  className={`transition-all ${planGated ? 'opacity-50' : ''}`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => !planGated && setFeedExpanded(isExpanded ? null : item.id)}
+                    className={`w-full text-left px-6 py-4 hover:bg-slate-800/30 transition-all cursor-pointer ${isExpanded ? 'bg-slate-800/20' : ''}`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Urgency dot */}
+                      <div className="mt-1 shrink-0">
+                        <span className={`w-2 h-2 rounded-full block ${urgencyCfg.dot} ${item.urgency === 'CRITICAL' ? 'animate-pulse' : ''}`} />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          {/* Type badge */}
+                          <span className={`px-2 py-0.5 text-[9px] font-mono font-black rounded border ${typeCfg.bg} ${typeCfg.border} ${typeCfg.badgeColor} uppercase tracking-wider`}>
+                            {typeCfg.label}
+                          </span>
+                          {/* Urgency */}
+                          <span className={`px-2 py-0.5 text-[9px] font-mono font-black rounded border ${urgencyCfg.bg} ${urgencyCfg.border} ${urgencyCfg.color} uppercase tracking-wider`}>
+                            {item.urgency}
+                          </span>
+                          {/* New badge */}
+                          {item.isNew && (
+                            <span className="px-1.5 py-0.5 text-[9px] font-mono font-black rounded bg-blue-500 text-white uppercase tracking-wider">
+                              NEW
+                            </span>
+                          )}
+                          {/* Plan gate */}
+                          {planGated && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono font-black rounded bg-slate-800 border border-slate-700 text-slate-500 uppercase tracking-wider">
+                              <Lock className="h-2.5 w-2.5" />
+                              Growth
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-sm font-bold text-white leading-snug">{item.title}</p>
+                        <div className="flex items-center gap-4 mt-1">
+                          <span className="text-[10px] font-mono text-slate-500">{item.timestamp}</span>
+                          <span className="text-[10px] font-mono text-slate-600">·</span>
+                          <span className="text-[10px] font-mono text-slate-500">{item.source}</span>
+                        </div>
+                      </div>
+
+                      {/* Right: revenue + expand */}
+                      <div className="shrink-0 text-right">
+                        <div className="text-sm font-display font-black text-emerald-400">{item.estimatedRevenue}</div>
+                        <div className="text-[10px] font-mono text-slate-600 mt-0.5">{item.timeWindow}</div>
+                        <ChevronRight className={`h-4 w-4 text-slate-600 mt-1 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Expanded detail */}
+                  <AnimatePresence>
+                    {isExpanded && !planGated && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-6 pb-5 pt-2 ml-6 space-y-4 border-t border-slate-800/60">
+                          <p className="text-sm text-slate-400 font-mono leading-relaxed">
+                            {item.description}
+                          </p>
+                          <div className={`flex items-start gap-3 p-3.5 ${typeCfg.bg} border ${typeCfg.border} rounded-xl`}>
+                            <Zap className={`h-4 w-4 ${typeCfg.color} shrink-0 mt-0.5`} />
+                            <div>
+                              <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-0.5">Recommended Action</p>
+                              <p className={`text-sm font-bold ${typeCfg.color}`}>{item.action}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => { window.location.hash = '#campaign'; }}
+                              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-mono font-black uppercase tracking-widest rounded-lg cursor-pointer"
+                            >
+                              Build Campaign
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => { window.location.hash = '#radar'; }}
+                              className="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono font-black uppercase tracking-widest rounded-lg cursor-pointer hover:border-slate-600"
+                            >
+                              View Radar
+                            </motion.button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
+
+          {feed.filter(item => feedFilter === 'all' || item.type === feedFilter).length === 0 && (
+            <div className="px-6 py-10 text-center text-slate-600 font-mono text-xs uppercase tracking-widest">
+              No signals match this filter right now.
+            </div>
+          )}
+        </div>
+
+        {/* Feed footer */}
+        <div className="border-t border-slate-800 px-6 py-3 flex items-center justify-between">
+          <span className="text-[10px] font-mono text-slate-600">
+            {feed.length} signals · refreshes daily
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const city     = currentUser?.city?.split(',')[0] ?? 'Austin';
+              const industry = currentUser?.industry ?? 'HVAC';
+              const plan     = currentUser?.subscriptionPlan ?? 'Starter';
+              setFeed(generateLiveFeed(city, industry, plan));
+              setFeedExpanded(null);
+            }}
+            className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Refresh
+          </button>
+        </div>
+      </motion.div>
 
       {/* 4-BENTO METRIC GRID WITH PREMIUM ANIMATIONS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
