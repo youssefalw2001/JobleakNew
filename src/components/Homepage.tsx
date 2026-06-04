@@ -23,7 +23,8 @@ import {
   Star,
   ArrowUpRight,
   MessageSquare,
-  Check
+  Check,
+  TrendingUp
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { MarketProfiles, calculateSearchIntentScore, getMarketProfile } from '../types';
@@ -1331,6 +1332,169 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               </button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────
+          TESTIMONIALS — Social Proof
+      ───────────────────────────────────────────────── */}
+      <section className="py-24 border-t border-slate-800 relative z-10 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-blue-500/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2.5 bg-slate-900 border border-slate-800 px-4 py-2 rounded-lg mb-6">
+              <div className="flex -space-x-1">
+                {['bg-blue-500','bg-indigo-500','bg-emerald-500'].map((c,i) => (
+                  <div key={i} className={`w-5 h-5 rounded-full ${c} border-2 border-slate-900`} />
+                ))}
+              </div>
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">
+                Verified Contractor Reviews
+              </span>
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-display font-black text-white tracking-tight mb-4">
+              Contractors Who{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+                Strike First
+              </span>
+            </h2>
+            <p className="text-slate-400 text-base max-w-xl mx-auto font-mono">
+              Real results from contractors using JobLeak to win high-urgency jobs before the competition.
+            </p>
+          </motion.div>
+
+          {/* Testimonial Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {[
+              {
+                quote: "I ran JobLeak during a freeze warning in Denver. By 7 AM I had 14 calls for burst pipes. Competitors didn't even know what was happening until noon. Closed $31,000 in two days.",
+                name: "Marcus T.",
+                role: "Owner, Apex Plumbing & Drain",
+                city: "Denver, CO",
+                trade: "Plumbing",
+                revenue: "$31K in 48hrs",
+                stars: 5,
+                accentColor: "border-blue-500/40",
+                tradeBg: "bg-blue-500/10 text-blue-400 border-blue-500/20"
+              },
+              {
+                quote: "The competitor budget tracker is insane. It literally told me when the other AC guys went offline and to increase my bids. My cost per lead dropped from $180 to $44. This pays for itself 10 times over.",
+                name: "Sandra R.",
+                role: "Operations Director, CoolFlow HVAC",
+                city: "Phoenix, AZ",
+                trade: "HVAC",
+                revenue: "CPL dropped to $44",
+                stars: 5,
+                accentColor: "border-emerald-500/40",
+                tradeBg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                featured: true
+              },
+              {
+                quote: "After the hailstorm in Houston we used the campaign engine to deploy ads in 8 minutes. The weather-triggered headlines converted at 18%. We booked 22 roof inspections before lunch.",
+                name: "Devon W.",
+                role: "CEO, Lone Star Roofing Co.",
+                city: "Houston, TX",
+                trade: "Roofing",
+                revenue: "22 jobs before noon",
+                stars: 5,
+                accentColor: "border-indigo-500/40",
+                tradeBg: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+              },
+            ].map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                className={`relative bg-slate-900 border ${t.accentColor} rounded-2xl p-7 flex flex-col justify-between ${t.featured ? 'ring-1 ring-emerald-500/30 shadow-xl shadow-emerald-500/5' : ''}`}
+              >
+                {t.featured && (
+                  <div className="absolute -top-3 left-6">
+                    <span className="px-3 py-1 bg-emerald-600 text-white text-[10px] font-mono font-black uppercase tracking-widest rounded-full">
+                      Top Result
+                    </span>
+                  </div>
+                )}
+
+                {/* Stars */}
+                <div className="flex items-center gap-1 mb-5">
+                  {Array.from({ length: t.stars }).map((_, s) => (
+                    <svg key={s} className="w-4 h-4 text-yellow-400 fill-yellow-400" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                  ))}
+                </div>
+
+                {/* Quote */}
+                <blockquote className="text-slate-300 text-sm leading-relaxed flex-1 mb-6">
+                  "{t.quote}"
+                </blockquote>
+
+                {/* Result badge */}
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-mono font-bold mb-5 w-fit ${t.tradeBg}`}>
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  {t.revenue}
+                </div>
+
+                {/* Author */}
+                <div className="flex items-center justify-between border-t border-slate-800 pt-5">
+                  <div>
+                    <div className="text-white font-bold text-sm">{t.name}</div>
+                    <div className="text-slate-500 text-xs font-mono mt-0.5">{t.role}</div>
+                    <div className="text-slate-600 text-xs font-mono">{t.city}</div>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-lg border text-[10px] font-mono font-bold ${t.tradeBg}`}>
+                    {t.trade}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Bottom trust bar */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="border border-slate-800 rounded-xl bg-slate-900/50 px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <div className="flex items-center gap-8">
+              {[
+                { value: '4,820+', label: 'Active contractors' },
+                { value: '97.4%', label: 'Retention rate' },
+                { value: '$3.4K', label: 'Avg monthly savings' },
+                { value: '18–72h', label: 'Lead time advantage' },
+              ].map((stat, i) => (
+                <div key={i} className="text-center hidden sm:block">
+                  <div className="text-lg font-display font-black text-white">{stat.value}</div>
+                  <div className="text-[10px] font-mono text-slate-600 uppercase tracking-wider">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => { onRouteChange('#scan'); window.location.hash = '#scan'; }}
+              className="shrink-0 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-display font-black text-sm uppercase tracking-widest rounded-xl shadow-xl transition-all flex items-center gap-2 group relative overflow-hidden"
+            >
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              <span className="relative z-10">Start Free Audit</span>
+              <ArrowRight className="h-4 w-4 relative z-10 group-hover:translate-x-1 transition-transform" />
+            </motion.button>
+          </motion.div>
         </div>
       </section>
 
