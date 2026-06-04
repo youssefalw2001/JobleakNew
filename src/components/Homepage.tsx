@@ -57,61 +57,8 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-7 space-y-5"
+              className="lg:col-span-7 space-y-6"
             >
-              {/* ── Animated brand name — letter by letter ── */}
-              <div className="flex items-end gap-0 overflow-visible -mb-1">
-                {/* "JOB" — white */}
-                {'JOB'.split('').map((letter, i) => (
-                  <motion.div
-                    key={`job-${i}`}
-                    initial={{ opacity: 0, y: 32 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      delay: 0.08 + i * 0.08,
-                      duration: 0.5,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                    className="text-4xl sm:text-5xl font-display font-black text-white uppercase leading-none tracking-tight"
-                    style={{ display: 'inline-block' }}
-                  >
-                    {letter}
-                  </motion.div>
-                ))}
-
-                {/* Small gap between JOB and LEAK */}
-                <div style={{ display: 'inline-block', width: '6px' }} />
-
-                {/* "LEAK" — gradient */}
-                {'LEAK'.split('').map((letter, i) => (
-                  <motion.div
-                    key={`leak-${i}`}
-                    initial={{ opacity: 0, y: 32 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      delay: 0.4 + i * 0.08,
-                      duration: 0.5,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                    className="text-4xl sm:text-5xl font-display font-black uppercase leading-none tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400"
-                    style={{ display: 'inline-block' }}
-                  >
-                    {letter}
-                  </motion.div>
-                ))}
-
-                {/* Cursor — fades out after sequence finishes */}
-                <motion.div
-                  initial={{ opacity: 1 }}
-                  animate={{ opacity: [1, 1, 0] }}
-                  transition={{ delay: 1.2, duration: 0.4, times: [0, 0.5, 1] }}
-                  className="text-4xl sm:text-5xl font-display font-black text-blue-400 leading-none pb-0.5"
-                  style={{ display: 'inline-block' }}
-                >
-                  _
-                </motion.div>
-              </div>
-
               {/* ── 3-Pillar intelligence badge strip ── */}
               <div className="flex flex-wrap gap-2">
                 {[
