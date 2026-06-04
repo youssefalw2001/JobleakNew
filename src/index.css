@@ -146,3 +146,46 @@ body {
   );
   background-size: 1000px 100%;
 }
+
+
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS - NO LAG
+   ======================================== */
+
+/* Smooth page transitions - NO LAG */
+#jobleak-app-frame {
+  will-change: auto;
+}
+
+main {
+  will-change: auto;
+  contain: layout style;
+}
+
+/* Optimize animations for GPU acceleration */
+.bento-card,
+.bento-card-dark {
+  will-change: auto;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Prevent layout shift during page transitions */
+[data-framer-page] {
+  min-height: 100vh;
+}
+
+/* Smooth scrolling with instant behavior */
+html {
+  scroll-behavior: auto;
+}
+
+/* Reduce motion for accessibility and performance */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

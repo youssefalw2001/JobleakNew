@@ -63,8 +63,8 @@ export default function App() {
       const pageName = hash.replace('#', '') || 'home';
       analytics.pageView(hash, `JobLeak - ${pageName.charAt(0).toUpperCase() + pageName.slice(1)}`);
       
-      // Automatically scroll window to top for standard high quality UX transit
-      window.scrollTo(0, 0);
+      // Smooth instant scroll to top - NO LAG
+      window.scrollTo({ top: 0, behavior: 'instant' });
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -162,15 +162,16 @@ export default function App() {
 
   // Compute layout structure on route mapping
   const renderPage = () => {
+    // OPTIMIZED: Faster, smoother animations with no layout shift
     const pageVariants = {
-      initial: { opacity: 0, y: 20 },
-      animate: { opacity: 1, y: 0 },
-      exit: { opacity: 0, y: -20 }
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 }
     };
 
     const transition = {
-      duration: 0.3,
-      ease: [0.16, 1, 0.3, 1]
+      duration: 0.15,
+      ease: 'easeInOut'
     };
 
     // Wrap each route in Suspense for lazy loading
@@ -347,9 +348,9 @@ export default function App() {
       {/* 1. Header Frame - Hidden strictly on Admin to separate portal look */}
       {!isAdminRoute && <Navbar currentRoute={currentRoute} onRouteChange={handleRouteChange} />}
 
-      {/* 2. Primary Page Render */}
-      <main className="flex-grow relative z-10">
-        <AnimatePresence mode="wait">
+      {/* 2. Primary Page Render - NO LAYOUT SHIFT */}
+      <main className="flex-grow relative z-10 min-h-[80vh]">
+        <AnimatePresence mode="wait" initial={false}>
           {renderPage()}
         </AnimatePresence>
       </main>
