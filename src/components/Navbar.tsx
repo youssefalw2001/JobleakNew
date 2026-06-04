@@ -59,11 +59,8 @@ export default function Navbar({ currentRoute, onRouteChange }: NavbarProps) {
             >
               {/* Premium Animated Logo */}
               <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-blue-600 text-white overflow-hidden shadow-xl shadow-blue-500/40 border border-white/20 group-hover:shadow-blue-400/60 transition-all duration-300">
-                {/* Animated pulse ring */}
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-400 animate-pulse opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                
-                {/* Rotating background gradient */}
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity animate-shimmer"></div>
+                {/* Animated gradient overlay on hover only — no continuous animation */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
                 {/* Icon with drop effect */}
                 <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
@@ -87,21 +84,24 @@ export default function Navbar({ currentRoute, onRouteChange }: NavbarProps) {
           </div>
 
           {/* Desktop Navigation Linkages */}
-          <div className="hidden md:flex space-x-6 h-full items-stretch">
-            {navItems.map((item) => (
-              <button
-                key={item.route}
-                id={`nav-link-${item.route.replace('#', '')}`}
-                onClick={() => handleNavClick(item.route)}
-                className={`flex items-center px-1 pt-1 text-sm ${
-                  currentRoute === item.route || (currentRoute === '' && item.route === '#home')
-                    ? 'text-blue-400 border-b-2 border-blue-500 font-semibold' 
-                    : 'text-slate-400 hover:text-white hover:border-b-2 hover:border-slate-700 transition-all'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          <div className="hidden md:flex space-x-1 h-full items-center">
+            {navItems.map((item) => {
+              const isActive = currentRoute === item.route || (currentRoute === '' && item.route === '#home');
+              return (
+                <button
+                  key={item.route}
+                  id={`nav-link-${item.route.replace('#', '')}`}
+                  onClick={() => handleNavClick(item.route)}
+                  className={`flex items-center px-3 py-1.5 text-sm font-mono font-bold rounded-lg transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Right action banner with Scan Form shortcut */}

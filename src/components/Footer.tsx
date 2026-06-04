@@ -119,7 +119,7 @@ export default function Footer({ onRouteChange }: FooterProps) {
               ].map((api, idx) => (
                 <li key={idx} className="flex items-center justify-between text-slate-300">
                   <span className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full bg-${api.color}-500 ${api.status === 'operational' ? 'animate-pulse' : ''}`} />
+                    <span className={`w-2 h-2 rounded-full bg-${api.color}-500`} />
                     {api.name}
                   </span>
                   <span className={`text-[10px] font-mono font-bold uppercase text-${api.color}-400`}>
@@ -179,7 +179,7 @@ export default function Footer({ onRouteChange }: FooterProps) {
               <span>© {currentYear} JobLeak Intelligence Technologies.</span>
               <span className="hidden md:inline">•</span>
               <span>Built with</span>
-              <Heart className="h-3 w-3 text-red-400 fill-red-400 animate-pulse" />
+              <Heart className="h-3 w-3 text-red-400 fill-red-400" />
               <span>for contractors.</span>
             </p>
             <div className="flex items-center gap-6 text-xs text-slate-400">
