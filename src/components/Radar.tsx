@@ -607,9 +607,10 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                           <div className="text-xs font-mono font-bold text-orange-400">{comp.spend}</div>
                           <div className="mt-1.5 w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
                             <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${comp.strength}%` }}
+                              initial={{ scaleX: 0 }}
+                              animate={{ scaleX: 1 }}
                               transition={{ delay: 0.3 + i * 0.08, duration: 0.8, ease: 'easeOut' }}
+                              style={{ width: `${comp.strength}%`, transformOrigin: 'left' }}
                               className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full"
                             />
                           </div>

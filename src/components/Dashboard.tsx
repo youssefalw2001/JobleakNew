@@ -195,8 +195,9 @@ export default function Dashboard() {
   const userPlan = currentUser?.subscriptionPlan || 'Free Trial';
   
   // Calculate dynamic LTD Billings based ONLY on their own closed logged calls
+  const safeCalls = currentUser?.loggedCalls ?? [];
   const closedBookingsCount = currentUser 
-    ? Math.max(1, currentUser.loggedCalls.filter(c => c.status === 'Inbound').length) 
+    ? Math.max(1, safeCalls.filter(c => c.status === 'Inbound').length) 
     : 3;
   const dynamicBillings = closedBookingsCount * averageContractValue;
 
@@ -464,7 +465,7 @@ export default function Dashboard() {
               transition={{ delay: 0.4, duration: 0.5 }}
               className="text-4xl font-display font-black text-white mb-2"
             >
-              {currentUser ? currentUser.loggedCalls.length : 12}
+              {currentUser ? (currentUser.loggedCalls ?? []).length : 12}
             </motion.h3>
             
             <p className="text-xs text-slate-400 font-sans leading-relaxed">
@@ -585,7 +586,7 @@ export default function Dashboard() {
 
         // Inbound calls this month (treat all logged calls as "this month" for demo)
         const inboundCalls = currentUser
-          ? currentUser.loggedCalls.filter(c => c.status === 'Inbound').length
+          ? (currentUser.loggedCalls ?? []).filter(c => c.status === 'Inbound').length
           : 0;
 
         // Revenue generated from logged calls
@@ -688,9 +689,10 @@ export default function Dashboard() {
                     </div>
                     <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                       <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${breakevenProgress}%` }}
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
                         transition={{ delay: 0.8, duration: 1, ease: 'easeOut' }}
+                        style={{ width: `${breakevenProgress}%`, transformOrigin: 'left' }}
                         className={`h-full rounded-full ${
                           isBreakeven
                             ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
@@ -785,12 +787,12 @@ export default function Dashboard() {
               <p className="text-[11px] text-slate-400 font-mono">Isolated strictly to your current logged account session</p>
             </div>
             <span className="px-2 py-0.5 bg-blue-100/10 border border-blue-500/30 text-blue-400 text-[10px] font-mono font-bold rounded uppercase">
-              {currentUser ? `${currentUser.loggedCalls.length} logs` : 'Sample Data'}
+              {currentUser ? `${(currentUser.loggedCalls ?? []).length} logs` : 'Sample Data'}
             </span>
           </div>
 
           {currentUser ? (
-            currentUser.loggedCalls.length === 0 ? (
+            (currentUser.loggedCalls ?? []).length === 0 ? (
               <div className="text-center py-12 space-y-3 bg-slate-900/50/50 rounded-xl border border-dashed border-slate-700">
                 <Smartphone className="h-10 w-10 text-slate-350 mx-auto animate-pulse" />
                 <h4 className="text-sm font-bold font-mono text-slate-650">No Captured Communications Available</h4>
@@ -800,7 +802,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
-                {currentUser.loggedCalls.map((call) => (
+                {(currentUser.loggedCalls ?? []).map((call) => (
                   <div key={call.id} className="bg-slate-900/50 border border-slate-150 rounded-xl p-4 flex items-start justify-between hover:border-slate-600 transition-colors">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
@@ -872,7 +874,7 @@ export default function Dashboard() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-200">
                 {currentUser ? (
-                  currentUser.billingHistory.map((inv) => (
+                  (currentUser.billingHistory ?? []).map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-900/50/50 transition-colors font-mono">
                       <td className="py-3 px-3 font-bold text-white flex items-center gap-1.5">
                         <FileText className="h-3.5 w-3.5 text-slate-450 text-slate-400 shrink-0" />
