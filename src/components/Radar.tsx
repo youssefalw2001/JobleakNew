@@ -13,7 +13,9 @@ import {
   AlertTriangle, CheckCircle, Sparkles, ArrowRight, Zap,
   Activity, DollarSign, Users, Clock, MessageSquare,
   ExternalLink, RefreshCw, Target, Award, ChevronUp,
-  Building2, BarChart2, Calendar, BarChart3, TrendingDown
+  Building2, BarChart2, Calendar, BarChart3, TrendingDown,
+  Star, Phone, Globe, AlertOctagon, FileText, Home,
+  Hammer, Lock
 } from 'lucide-react';
 import {
   calculateSearchIntentScore,
@@ -22,6 +24,9 @@ import {
   WeatherData
 } from '../types';
 import { fetchRedditLeads, RedditPost, timeAgo } from '../integrations/reddit';
+import { fetchCompetitorBusinesses, CompetitorBusiness } from '../integrations/googleMaps';
+import { fetchPermitData, fetchFemaDeclarations, PermitSummary, FemaDeclaration } from '../integrations/permits';
+import { getActiveSession } from '../authService';
 
 interface RadarProps {
   scannedData: { city: string; industry: string; serviceText: string } | null;
@@ -210,12 +215,23 @@ function UrgencyBadge({ urgency }: { urgency: RedditPost['urgency'] }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan }: RadarProps) {
-  const [loading, setLoading]           = useState(true);
-  const [weather, setWeather]           = useState<WeatherData | null>(null);
-  const [score, setScore]               = useState(0);
-  const [redditPosts, setRedditPosts]   = useState<RedditPost[]>([]);
-  const [redditLoading, setRedditLoading] = useState(true);
-  const [activeTab, setActiveTab]       = useState<'overview' | 'reddit'>('overview');
+  const [loading, setLoading]                 = useState(true);
+  const [weather, setWeather]                 = useState<WeatherData | null>(null);
+  const [score, setScore]                     = useState(0);
+  const [redditPosts, setRedditPosts]         = useState<RedditPost[]>([]);
+  const [redditLoading, setRedditLoading]     = useState(true);
+  const [competitors, setCompetitors]         = useState<CompetitorBusiness[]>([]);
+  const [compLoading, setCompLoading]         = useState(true);
+  const [permitData, setPermitData]           = useState<PermitSummary | null>(null);
+  const [femaData, setFemaData]               = useState<FemaDeclaration[]>([]);
+  const [intelligenceLoading, setIntelLoading]= useState(true);
+  const [activeTab, setActiveTab]             = useState<'overview' | 'competitors' | 'permits' | 'reddit'>('overview');
+
+  // Read plan from session
+  const session   = getActiveSession();
+  const userPlan  = session?.subscriptionPlan ?? 'Starter';
+  const isGrowth  = ['Growth', 'Pro'].includes(userPlan);
+  const isPro     = userPlan === 'Pro';
 
   const city     = scannedData?.city     || 'Austin';
   const industry = scannedData?.industry || 'HVAC';
@@ -230,6 +246,8 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
     try {
       setLoading(true);
       setRedditLoading(true);
+      setCompLoading(true);
+      setIntelLoading(true);
 
       const [weatherResult] = await Promise.allSettled([
         fetchWeather(city, industry),
@@ -244,24 +262,33 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
           setScore(65);
         }
       } else {
-        // Fallback score if weather fails
         setScore(65);
       }
       setLoading(false);
 
-      // Reddit separately so page doesn't block
-      try {
-        const posts = await fetchRedditLeads(city, industry, service);
-        setRedditPosts(posts);
-      } catch {
-        setRedditPosts([]);
-      }
-      setRedditLoading(false);
+      // All secondary fetches run in parallel — none block the main render
+      Promise.allSettled([
+        fetchRedditLeads(city, industry, service),
+        fetchCompetitorBusinesses(city, industry),
+        fetchPermitData(city, industry),
+        fetchFemaDeclarations(city),
+      ]).then(([redditRes, compRes, permitRes, femaRes]) => {
+        setRedditPosts(redditRes.status === 'fulfilled' ? redditRes.value : []);
+        setRedditLoading(false);
+        setCompetitors(compRes.status === 'fulfilled' ? compRes.value : []);
+        setCompLoading(false);
+        setPermitData(permitRes.status === 'fulfilled' ? permitRes.value : null);
+        setFemaData(femaRes.status === 'fulfilled' ? femaRes.value : []);
+        setIntelLoading(false);
+      });
+
     } catch (err) {
       console.error('Radar fetchAll error:', err);
       setScore(65);
       setLoading(false);
       setRedditLoading(false);
+      setCompLoading(false);
+      setIntelLoading(false);
     }
   };
 
@@ -316,14 +343,14 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
     );
   }
 
-  const urgency     = getUrgencyConfig(score);
-  const profile     = getMarketProfile(city);
-  const triggers    = weather?.triggers || [];
-  const highReddit  = redditPosts.filter(p => p.urgency === 'HIGH').length;
-  const intel       = getCityIntel(city, industry, score);
-  const competitors = getCompetitorSnapshot(city, industry);
-  const seasonal    = getSeasonalDemand(industry);
-  const currentMonth = new Date().getMonth(); // 0-indexed
+  const urgency      = getUrgencyConfig(score);
+  const profile      = getMarketProfile(city);
+  const triggers     = weather?.triggers || [];
+  const highReddit   = redditPosts.filter(p => p.urgency === 'HIGH').length;
+  const intel        = getCityIntel(city, industry, score);
+  const compSnapshot = getCompetitorSnapshot(city, industry);
+  const seasonal     = getSeasonalDemand(industry);
+  const currentMonth = new Date().getMonth();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
@@ -582,6 +609,318 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
               ))}
             </div>
 
+            {/* ── TABS ── */}
+            <div className="flex border-b border-slate-800 overflow-x-auto">
+              {[
+                { key: 'overview',    label: 'Market Analysis',    badge: null,        lock: false },
+                { key: 'competitors', label: 'Competitor Intel',   badge: 'GROWTH',    lock: !isGrowth },
+                { key: 'permits',     label: 'Permits & Disasters', badge: 'GROWTH',   lock: !isGrowth },
+                { key: 'reddit',      label: 'Community Signals',  badge: highReddit > 0 ? String(highReddit) : null, lock: false },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => !tab.lock && setActiveTab(tab.key as any)}
+                  className={`flex items-center gap-2 px-5 py-3.5 text-sm font-bold border-b-2 transition-all -mb-px shrink-0 ${
+                    tab.lock
+                      ? 'border-transparent text-slate-700 cursor-not-allowed'
+                      : activeTab === tab.key
+                        ? 'border-blue-500 text-white cursor-pointer'
+                        : 'border-transparent text-slate-500 hover:text-slate-300 cursor-pointer'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.lock && <Lock className="h-3 w-3 text-slate-700" />}
+                  {tab.badge && !tab.lock && !['GROWTH','PRO'].includes(tab.badge) && (
+                    <span className="px-1.5 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-mono font-bold rounded">
+                      {tab.badge}
+                    </span>
+                  )}
+                  {tab.badge && tab.lock && (
+                    <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-600 text-[9px] font-mono font-bold rounded uppercase">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* ── TAB: COMPETITORS (Growth+) ── */}
+            {activeTab === 'competitors' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
+                className="space-y-6">
+
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-display font-black text-white">
+                      Local Competitor Intelligence
+                    </h3>
+                    <p className="text-slate-500 text-sm mt-0.5 font-mono">
+                      Real businesses competing for the same {industry} jobs in {city}
+                    </p>
+                  </div>
+                  <span className="px-2.5 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-mono font-black rounded uppercase tracking-widest">
+                    Google Maps Data
+                  </span>
+                </div>
+
+                {compLoading ? (
+                  <div className="text-center py-16 space-y-3">
+                    <div className="w-8 h-8 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin mx-auto" />
+                    <p className="text-slate-600 text-xs font-mono uppercase tracking-widest">Pulling competitor data...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {competitors.map((biz, i) => (
+                      <motion.div
+                        key={biz.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-5 transition-all"
+                      >
+                        <div className="flex items-start gap-4">
+                          {/* Rank */}
+                          <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-mono font-black text-slate-400 shrink-0 mt-0.5">
+                            #{i + 1}
+                          </div>
+
+                          {/* Main info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <h4 className="text-sm font-bold text-white truncate">{biz.name}</h4>
+                              {/* Ad presence badge */}
+                              <span className={`shrink-0 px-2 py-0.5 text-[9px] font-mono font-black rounded uppercase tracking-widest border ${
+                                biz.adPresence === 'High'
+                                  ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                                  : biz.adPresence === 'Medium'
+                                    ? 'bg-orange-500/10 border-orange-500/30 text-orange-400'
+                                    : 'bg-slate-800 border-slate-700 text-slate-500'
+                              }`}>
+                                {biz.adPresence} Ad Presence
+                              </span>
+                            </div>
+
+                            {/* Rating + reviews row */}
+                            <div className="flex items-center gap-4 mb-2">
+                              <div className="flex items-center gap-1">
+                                {Array.from({ length: 5 }).map((_, s) => (
+                                  <Star
+                                    key={s}
+                                    className={`h-3 w-3 ${s < Math.round(biz.rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-700'}`}
+                                  />
+                                ))}
+                                <span className="text-xs font-mono text-slate-400 ml-1">
+                                  {biz.rating.toFixed(1)} ({biz.reviewCount.toLocaleString()})
+                                </span>
+                              </div>
+                              {biz.distance && (
+                                <span className="text-[10px] font-mono text-slate-600">
+                                  {biz.distance}
+                                </span>
+                              )}
+                              {biz.isOpen !== undefined && (
+                                <span className={`text-[10px] font-mono font-bold ${biz.isOpen ? 'text-emerald-400' : 'text-slate-600'}`}>
+                                  {biz.isOpen ? 'Open now' : 'Closed'}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Address */}
+                            <p className="text-[10px] font-mono text-slate-600 mb-2 truncate">{biz.address}</p>
+
+                            {/* Weakness insight */}
+                            {biz.weakness && (
+                              <div className="flex items-center gap-2 p-2 bg-emerald-500/5 border border-emerald-500/15 rounded-lg">
+                                <Target className="h-3 w-3 text-emerald-400 shrink-0" />
+                                <span className="text-[10px] font-mono text-emerald-300">{biz.weakness}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Market insight summary */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-slate-900 border border-slate-800 rounded-xl p-5"
+                >
+                  <div className="flex items-start gap-3">
+                    <BarChart3 className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-mono text-slate-400 leading-relaxed">
+                        <span className="text-white font-bold">
+                          {competitors.filter(c => c.adPresence === 'High').length} of {competitors.length} competitors
+                        </span>
+                        {' '}have high ad presence in {city}. Competitors exhaust daily budgets around{' '}
+                        <span className="text-blue-300 font-bold">{intel.hourDrop}:00 PM</span> —
+                        scheduling your highest bids in the {intel.hourDrop}:00–{intel.hourDrop + 3}:00 PM window
+                        captures leads at an estimated{' '}
+                        <span className="text-emerald-400 font-bold">{intel.budgetDrop}% lower CPC</span>.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* ── TAB: PERMITS & DISASTERS (Growth+) ── */}
+            {activeTab === 'permits' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
+                className="space-y-6">
+
+                {intelligenceLoading ? (
+                  <div className="text-center py-16 space-y-3">
+                    <div className="w-8 h-8 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin mx-auto" />
+                    <p className="text-slate-600 text-xs font-mono uppercase tracking-widest">Loading permit + disaster data...</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* FEMA Declarations */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                      <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <AlertOctagon className="h-4 w-4 text-red-400" />
+                          <h3 className="text-sm font-display font-black text-white">FEMA Disaster Declarations</h3>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">
+                          {femaData[0]?.state ?? 'Your State'} · Active declarations
+                        </span>
+                      </div>
+                      <div className="divide-y divide-slate-800/60">
+                        {femaData.map((decl, i) => (
+                          <motion.div
+                            key={decl.id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: i * 0.07 }}
+                            className="px-6 py-5"
+                          >
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={`px-2 py-0.5 text-[9px] font-mono font-black rounded border uppercase tracking-widest ${
+                                    decl.urgency === 'CRITICAL'
+                                      ? 'bg-red-500/15 border-red-500/30 text-red-400'
+                                      : decl.urgency === 'HIGH'
+                                        ? 'bg-orange-500/15 border-orange-500/30 text-orange-400'
+                                        : 'bg-slate-800 border-slate-700 text-slate-400'
+                                  }`}>
+                                    {decl.urgency}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-slate-600">{decl.id}</span>
+                                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                    decl.declarationType === 'DR'
+                                      ? 'bg-red-500/10 text-red-400'
+                                      : 'bg-orange-500/10 text-orange-400'
+                                  }`}>
+                                    {decl.declarationType === 'DR' ? 'Major Disaster' : 'Emergency'}
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-bold text-white">{decl.incidentType} — {decl.county}</h4>
+                                <p className="text-[10px] font-mono text-slate-500 mt-0.5">
+                                  Declared {decl.declarationDate} · {decl.daysActive} days active
+                                  · Programs: {decl.programsAvailable.join(', ')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2 p-3 bg-emerald-500/5 border border-emerald-500/15 rounded-lg">
+                              <Hammer className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                              <p className="text-xs font-mono text-emerald-300 leading-relaxed">
+                                {decl.contractorOpportunity}
+                              </p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Permit data */}
+                    {permitData && (
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                        <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <FileText className="h-4 w-4 text-blue-400" />
+                            <h3 className="text-sm font-display font-black text-white">
+                              US Census Building Permits — {city}
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 text-[9px] font-mono font-bold rounded border ${
+                              permitData.trend === 'Rising'
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                : permitData.trend === 'Declining'
+                                  ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                                  : 'bg-slate-800 border-slate-700 text-slate-400'
+                            }`}>
+                              {permitData.trend}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-6 space-y-5">
+                          {/* Summary stats */}
+                          <div className="grid grid-cols-3 gap-px bg-slate-800 rounded-xl overflow-hidden border border-slate-800">
+                            {[
+                              { label: 'Last 6 Months',   value: permitData.totalLast6Months.toLocaleString(), sub: 'total units permitted', color: 'text-white' },
+                              { label: 'Monthly Average',  value: permitData.avgMonthly.toLocaleString(),       sub: 'units/month',           color: 'text-blue-400' },
+                              { label: 'Market Trend',     value: permitData.trend,                             sub: 'vs prior 6 months',     color: permitData.trend === 'Rising' ? 'text-emerald-400' : permitData.trend === 'Declining' ? 'text-red-400' : 'text-slate-300' },
+                            ].map((s, i) => (
+                              <div key={i} className="bg-slate-900 p-4 text-center">
+                                <div className={`text-xl font-display font-black ${s.color}`}>{s.value}</div>
+                                <div className="text-[9px] font-mono text-slate-600 uppercase tracking-wider mt-0.5">{s.label}</div>
+                                <div className="text-[9px] font-mono text-slate-600">{s.sub}</div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Bar chart — last 6 months */}
+                          <div>
+                            <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-3">
+                              Monthly Permit Volume
+                            </p>
+                            <div className="flex items-end gap-2 h-24">
+                              {permitData.dataPoints.map((dp, i) => {
+                                const max = Math.max(...permitData.dataPoints.map(d => d.units));
+                                const heightPct = Math.round((dp.units / max) * 100);
+                                const isLast = i === permitData.dataPoints.length - 1;
+                                return (
+                                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                    <motion.div
+                                      initial={{ scaleY: 0 }}
+                                      animate={{ scaleY: 1 }}
+                                      transition={{ delay: 0.1 + i * 0.07, duration: 0.5, ease: 'easeOut' }}
+                                      style={{ height: `${heightPct}%`, transformOrigin: 'bottom' }}
+                                      className={`w-full rounded-t ${isLast ? 'bg-blue-500' : 'bg-slate-700'}`}
+                                    />
+                                    <span className="text-[8px] font-mono text-slate-600">{dp.month.split(' ')[0]}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Trade relevance callout */}
+                          <div className="flex items-start gap-3 p-4 bg-blue-500/5 border border-blue-500/15 rounded-xl">
+                            <Home className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+                            <p className="text-xs font-mono text-slate-400 leading-relaxed">
+                              <span className="text-white font-bold">{industry} opportunity: </span>
+                              {permitData.relevanceToTrade}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </motion.div>
+            )}
+
             {/* ── TAB: OVERVIEW ── */}
             {activeTab === 'overview' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
@@ -745,7 +1084,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                       These are the businesses you are competing against for the same homeowner searches right now.
                       Ad spend ranges are estimated from keyword auction density and impression share signals.
                     </p>
-                    {competitors.map((comp, i) => (
+                    {compSnapshot.map((comp, i) => (
                       <motion.div key={i}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
