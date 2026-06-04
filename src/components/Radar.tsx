@@ -127,25 +127,42 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
   }, [city, industry, service]);
 
   const fetchAll = async () => {
-    setLoading(true);
-    setRedditLoading(true);
+    try {
+      setLoading(true);
+      setRedditLoading(true);
 
-    // Weather + score in parallel with Reddit
-    const [weatherResult] = await Promise.allSettled([
-      fetchWeather(city, industry),
-    ]);
+      const [weatherResult] = await Promise.allSettled([
+        fetchWeather(city, industry),
+      ]);
 
-    if (weatherResult.status === 'fulfilled') {
-      setWeather(weatherResult.value);
-      const { score: s } = calculateSearchIntentScore(city, service, industry);
-      setScore(s);
+      if (weatherResult.status === 'fulfilled') {
+        setWeather(weatherResult.value);
+        try {
+          const { score: s } = calculateSearchIntentScore(city, service, industry);
+          setScore(s);
+        } catch {
+          setScore(65);
+        }
+      } else {
+        // Fallback score if weather fails
+        setScore(65);
+      }
+      setLoading(false);
+
+      // Reddit separately so page doesn't block
+      try {
+        const posts = await fetchRedditLeads(city, industry, service);
+        setRedditPosts(posts);
+      } catch {
+        setRedditPosts([]);
+      }
+      setRedditLoading(false);
+    } catch (err) {
+      console.error('Radar fetchAll error:', err);
+      setScore(65);
+      setLoading(false);
+      setRedditLoading(false);
     }
-    setLoading(false);
-
-    // Reddit separately so page doesn't block
-    const posts = await fetchRedditLeads(city, industry, service);
-    setRedditPosts(posts);
-    setRedditLoading(false);
   };
 
   const fetchWeather = async (city: string, industry: string): Promise<WeatherData> => {
@@ -353,8 +370,8 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                   <div className="h-4 w-px bg-slate-800 shrink-0" />
                   <div className="overflow-hidden flex-1">
                     <motion.div
-                      animate={{ x: ['0%', '-50%'] }}
-                      transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                      animate={{ x: [0, -1200] }}
+                      transition={{ duration: 28, repeat: Infinity, ease: 'linear', repeatType: 'loop' }}
                       className="flex items-center gap-8 whitespace-nowrap"
                     >
                       {[
