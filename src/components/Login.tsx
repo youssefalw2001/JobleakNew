@@ -157,7 +157,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       businessName:     businessName.trim() || 'New Services',
       industry:         industry || 'HVAC',
       city:             `${targetCity}, ${selectedState}`,
-      subscriptionPlan: subscriptionPlan,
+      subscriptionPlan: 'Free Trial' as const,
       loggedCalls:      [],
       billingHistory: [
         {
@@ -287,11 +287,12 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     try {
       if (authMode === 'signup') {
         if (passwordInput !== confirmPasswordInput) throw new Error('Passwords do not match.');
-        if (!businessName.trim()) throw new Error('Business name is required.');
         const cred = await createUserWithEmailAndPassword(auth, emailInput, passwordInput);
-        setPendingFirebaseUid(cred.user.uid);
-        setPendingUserEmail(cred.user.email);
-        setShowCheckoutModal(true);
+        // Create profile immediately with Free Trial — no checkout modal needed
+        const freshProfile = await createFirestoreProfile(cred.user.uid, cred.user.email, null);
+        saveActiveSession(freshProfile);
+        setSuccess(true);
+        setTimeout(() => onLoginSuccess(freshProfile), 1600);
       } else {
         const cred    = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
         const profile = await syncExistingProfile(cred.user.uid, cred.user.email);
@@ -666,14 +667,13 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                       </div>
                     )}
 
-                    {/* Business name */}
+                    {/* Business name — optional */}
                     <div className="mb-4">
                       <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                        Company Name
+                        Company Name <span className="text-slate-700 normal-case">(optional)</span>
                       </label>
                       <input
                         type="text"
-                        required
                         value={businessName}
                         onChange={e => setBusinessName(e.target.value)}
                         placeholder="e.g. Austin Air Systems"
@@ -719,32 +719,12 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                       </div>
                     </div>
 
-                    {/* Plan selector */}
-                    <div>
-                      <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-2">
-                        Select Plan
-                      </label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(['Starter', 'Growth', 'Pro'] as const).map(plan => (
-                          <button
-                            key={plan}
-                            type="button"
-                            onClick={() => setSubscriptionPlan(plan)}
-                            className={`relative py-3 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${
-                              subscriptionPlan === plan
-                                ? 'bg-gradient-to-b from-blue-600 to-indigo-700 border-blue-500 text-white shadow-lg shadow-blue-500/20'
-                                : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
-                            }`}
-                          >
-                            <div className="text-[10px] font-black uppercase tracking-wider">{plan}</div>
-                            <div className={`text-[9px] mt-0.5 ${subscriptionPlan === plan ? 'text-blue-200' : 'text-slate-600'}`}>
-                              ${planPrices[plan]}/mo
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-[10px] font-mono text-slate-600 mt-2">
-                        You'll be redirected to Whop checkout after account creation.
+                    {/* Free trial note — no plan selection at signup */}
+                    <div className="flex items-center gap-3 p-3.5 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                      <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <p className="text-xs font-mono text-slate-400 leading-relaxed">
+                        <span className="text-white font-bold">Free account — no card needed.</span>{' '}
+                        You get 1 free scan. Upgrade anytime from your dashboard to unlock unlimited scans and all intelligence features.
                       </p>
                     </div>
                   </div>
