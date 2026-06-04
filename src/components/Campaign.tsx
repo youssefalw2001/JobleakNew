@@ -1,705 +1,650 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * CAMPAIGN ENGINE — Full rebuild. Million-dollar design.
+ * Google Ads generator + CSV export + Email templates + LSA checklist + Reddit leads.
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  BookOpen, 
-  Search, 
-  PhoneCall, 
-  Send, 
-  MessageSquare, 
-  ClipboardList, 
-  CheckSquare, 
-  DollarSign, 
-  Plus, 
-  Minus, 
-  Percent, 
-  TrendingUp, 
-  MapPin, 
-  Layers, 
-  ShieldCheck,
-  RefreshCw,
-  Award,
-  Copy,
-  CheckCheck
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Sparkles, Download, Copy, CheckCircle, ArrowRight,
+  Zap, Target, DollarSign, Mail, List, MessageSquare,
+  ChevronDown, ChevronUp, ExternalLink, Clock,
+  TrendingUp, AlertTriangle, Search, Users
 } from 'lucide-react';
-import { getMarketProfile, MarketProfile } from '../types';
+import {
+  generateGoogleAdsCampaign,
+  exportCampaignToCSV,
+  generateEmailTemplate,
+  getLSAChecklist,
+  GoogleAdsCampaign
+} from '../integrations/googleAds';
+import { fetchRedditLeads, RedditPost, timeAgo } from '../integrations/reddit';
 
 interface CampaignProps {
-  scannedData: {
-    city: string;
-    industry: string;
-    serviceText: string;
-    weather?: {
-      maxTemp: number;
-      minTemp: number;
-      maxWind: number;
-      maxRainProb: number;
-      alerts: Array<{ event: string; severity: string }>;
-    };
-  } | null;
+  scannedData: { city: string; industry: string; serviceText: string } | null;
   onNavigateToScan: () => void;
 }
 
-interface KPIState {
-  campaignLaunched: boolean;
-  dailyBudget: number;
-  targetCpa: number;
-  checkedTasks: string[];
+// ─── Tab types ────────────────────────────────────────────────────────────────
+type Tab = 'google-ads' | 'email' | 'lsa' | 'reddit';
+
+// ─── Copy button ──────────────────────────────────────────────────────────────
+function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button onClick={handleCopy}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+        copied ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300' : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:border-slate-600'
+      }`}>
+      {copied ? <CheckCircle className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? 'Copied!' : label}
+    </button>
+  );
 }
 
-const LOCAL_STORAGE_KPI_KEY = 'jobleak_kpi_tracker_v1';
-
-export default function Campaign({ scannedData, onNavigateToScan }: CampaignProps) {
-  const [activeTab, setActiveTab] = useState<'search' | 'lsa' | 'reactivation' | 'callscript'>('search');
-  
-  // Copy functionality state
-  const [showWizard, setShowWizard] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-
-  const handleCopyField = (text: string, fieldId: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedField(fieldId);
-      setTimeout(() => setCopiedField(null), 2000);
-    }
-  };
-
-  // KPI tracker local state with persistent cache
-  const [kpis, setKpis] = useState<KPIState>({
-    campaignLaunched: false,
-    dailyBudget: 150,
-    targetCpa: 65,
-    checkedTasks: []
-  });
-
-  // Load KPI State from localStorage to keep values sticky
-  useEffect(() => {
-    try {
-      const cached = localStorage.getItem(LOCAL_STORAGE_KPI_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        setKpis({
-          ...parsed,
-          dailyBudget: parsed.dailyBudget ?? 150,
-          targetCpa: parsed.targetCpa ?? 65,
-        });
-      }
-    } catch (e) {
-      console.error('Failed to load local campaign tracker KPIs:', e);
-    }
-  }, []);
-
-  const saveKPIs = (updated: KPIState) => {
-    setKpis(updated);
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KPI_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to save KPI tracker:', e);
-    }
-  };
-
-  // Safe defaults if there's no scan loaded
-  const city = scannedData?.city || 'Austin';
-  const industry = scannedData?.industry || 'HVAC';
-  const serviceText = scannedData?.serviceText || 'Emergency AC repair & coil blowout';
-  
-  // Fetch market rates and profile metrics
-  const profile = getMarketProfile(city);
-  const maxTemp = scannedData?.weather?.maxTemp ?? 92;
-  const maxWind = scannedData?.weather?.maxWind ?? 14;
-
-  // Compute forecast metrics
-  const estimatedCpc = industry.toLowerCase() === 'plumbing' ? 24 : industry.toLowerCase() === 'mold' ? 45 : 18;
-  const clicksPerDay = Math.floor(kpis.dailyBudget / estimatedCpc);
-  const convRateBase = kpis.dailyBudget > 100 ? 0.15 : 0.08; 
-  const forecastedLeads = Math.floor(clicksPerDay * convRateBase * 30); // Monthly Leads
-  const estimatedRevenue = forecastedLeads * 1250; // Avg contract size
-
-  const handleToggleLaunch = () => {
-    const updated = { ...kpis, campaignLaunched: !kpis.campaignLaunched };
-    saveKPIs(updated);
-  };
-
-  const handleResetSimulator = () => {
-    const reset = {
-      campaignLaunched: false,
-      dailyBudget: 150,
-      targetCpa: 65,
-      checkedTasks: []
-    };
-    saveKPIs(reset);
-  };
-
-  const handleToggleTask = (task: string) => {
-    const isChecked = kpis.checkedTasks.includes(task);
-    const updatedTasks = isChecked 
-      ? kpis.checkedTasks.filter(t => t !== task)
-      : [...kpis.checkedTasks, task];
-    
-    saveKPIs({ ...kpis, checkedTasks: updatedTasks });
-  };
-
-  // Contractor playbook data structures specifically localizing to scanned inputs
-  const googleSearchData = {
-    keywords: [
-      `+emergency +${industry.toLowerCase()} +${city.toLowerCase()}`,
-      `+local +${industry.toLowerCase()} +repair`,
-      `"${city.toLowerCase()} ${serviceText.toLowerCase()}"`,
-      `+same +day +${industry.toLowerCase()} +service`,
-      `[${city.toLowerCase()} ${industry.toLowerCase()} repair]`,
-    ],
-    headlines: [
-      `Emergency ${industry} Repair - ${city}`,
-      `24/7 Qualified Technicians Near You`,
-      `Same-Day ${serviceText} Dispatch`,
-      `No Hidden Scrape Fees - JobLeak Verified`
-    ],
-    negatives: [
-      'diy', 'jobs', 'salary', 'career', 'unemployment', 'tool rental', 'training', 'free video', 'youtube', 'schematic'
-    ]
-  };
-
-  const lsaChecklist = [
-    { title: `Radius Focus: Set precisely within 15 miles of geocoded central coordinates.`, desc: 'Avoid sprawling out of reach. Target extreme localized weather neighborhoods.' },
-    { title: `Business Hours Overrides: Enable '24/7 Emergency Dispatch' during weather warning window.`, desc: `Currently active alerts indicate a local surge is ongoing. Ready callers expect immediate human pickup.` },
-    { title: `Bid Settings: Switch to 'Maximize Leads' automated portfolio modeling.`, desc: 'LSA algorithms award heavy preference to high proximity and instantaneous pickup rates.' },
-    { title: `Active Licensure: Ensure licenses & structural certificates are up-to-date.`, desc: 'Google verifies credentials which guarantees green background badges.' }
-  ];
+// ─── Ad group accordion ───────────────────────────────────────────────────────
+function AdGroupCard({ group, index }: { group: GoogleAdsCampaign['adGroups'][0]; index: number }) {
+  const [open, setOpen] = useState(index === 0);
+  const ad = group.ads[0];
 
   return (
-    <div id="campaign-cockpit-workspace" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      
-      {/* 2-COLUMN LAYOUT CONSTRUCT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* COLUMN LEFT: STICKY METRIC PORTRAIT CARDS */}
-        <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-          
-          {/* ACTIVE OPPORTUNITY SUMMARY CARD */}
-          <div className="bento-card-dark p-5 space-y-4 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none admin-radar-grid" />
-            
-            <div className="flex items-center justify-between border-b border-slate-900 pb-3">
-              <div className="flex items-center space-x-2">
-                <Award className="h-4 w-4 text-blue-400" />
-                <span className="text-[10px] text-blue-400 font-mono tracking-wider font-extrabold uppercase">
-                  ACTIVE SCOUT METRICS
-                </span>
-              </div>
-              <span className="text-[10px] font-mono text-slate-400 uppercase">{city} Mode</span>
-            </div>
-
-            <div className="space-y-3">
-              <div className="text-[11px] font-mono leading-none text-slate-400">TARGET MARKET</div>
-              <p className="text-xl font-display font-extrabold text-white flex items-center gap-1.5">
-                <MapPin className="h-4.5 w-4.5 text-blue-500 shrink-0" />
-                {city} ({profile.name !== 'Default' ? `${profile.growth}% Growth` : 'Standard Market'})
-              </p>
-
-              <div className="text-[11px] font-mono leading-none text-slate-400 pt-1">ACTIVE CLASSIFIED CATEGORY</div>
-              <p className="text-md text-slate-200 font-sans font-semibold">
-                {industry} Services — <span className="text-blue-400">{serviceText}</span>
-              </p>
-
-              {scannedData?.weather ? (
-                <div className="mt-3 bg-slate-900 p-3 rounded border border-slate-800 text-[11px] space-y-1 text-slate-400">
-                  <div className="flex justify-between font-mono">
-                    <span>Forecast Temp Range:</span>
-                    <span className="text-slate-200">{scannedData.weather.minTemp}°F - {scannedData.weather.maxTemp}°F</span>
-                  </div>
-                  <div className="flex justify-between font-mono">
-                    <span>Max Wind Gust Velocity:</span>
-                    <span className="text-slate-200">{scannedData.weather.maxWind} mph</span>
-                  </div>
-                </div>
-              ) : (
-                <button 
-                  onClick={onNavigateToScan}
-                  className="w-full mt-2 py-2 text-center bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white rounded text-[11px] font-mono transition-all"
-                >
-                  Retrieve Active Met Scan Parameters
-                </button>
-              )}
-            </div>
-
-            {/* Launch Checklist toggle link */}
-            <div className="pt-2">
-              <button
-                onClick={handleToggleLaunch}
-                className={`w-full py-2.5 rounded font-display font-bold text-sm uppercase tracking-wider transition-all shadow ${
-                  kpis.campaignLaunched 
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white' 
-                    : 'bg-slate-900 hover:bg-slate-100 text-white'
-                }`}
-              >
-                {kpis.campaignLaunched ? '✓ CAMPAIGN IS LIVE' : 'SYNC CAMPAIGN AS LIVE'}
-              </button>
-            </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.08 }}
+      className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden">
+      <button onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-5 hover:bg-slate-800/50 transition-all text-left">
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${
+            index === 0 ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+            index === 1 ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+            'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+          }`}>{index + 1}</div>
+          <div>
+            <div className="text-white font-bold">{group.name}</div>
+            <div className="text-slate-400 text-xs mt-0.5">{group.keywords.length} keywords · CPC {group.suggestedCpcBid}</div>
           </div>
-
-          {/* BUDGET & FORECASTING SIMULATOR */}
-          <div className="bento-card p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-              <h3 className="font-mono text-[11px] font-extrabold tracking-wider text-slate-400 uppercase">
-                Campaign Forecast Engine
-              </h3>
-              
-              <button 
-                onClick={handleResetSimulator}
-                className="text-slate-400 hover:text-red-500 p-1 rounded font-mono text-[10px] flex items-center space-x-1"
-                title="Reset simulation parameters"
-              >
-                <RefreshCw className="h-3 w-3" />
-                <span>Reset</span>
-              </button>
-            </div>
-
-            {/* Simulated Live Statistics */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-900/50 p-3 rounded border border-slate-700">
-                <span className="text-[10px] font-mono text-slate-400 block uppercase">Est. Mo. Leads</span>
-                
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-xl font-display font-extrabold text-white">{forecastedLeads}</span>
-                </div>
-              </div>
-
-              <div className="bg-slate-900/50 p-3 rounded border border-slate-700">
-                <span className="text-[10px] font-mono text-slate-400 block uppercase">Avg CPC ({industry})</span>
-                
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-xl font-display font-extrabold text-blue-400">${estimatedCpc.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Daily Budget Slider */}
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
-                <span>DAILY AD BUDGET</span>
-                <span className="text-white font-bold">${kpis.dailyBudget}</span>
-              </div>
-              <div className="flex items-center">
-                <input 
-                  type="range"
-                  min="50"
-                  max="1000"
-                  step="50"
-                  value={kpis.dailyBudget}
-                  onChange={(e) => saveKPIs({ ...kpis, dailyBudget: parseInt(e.target.value) })}
-                  className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-              </div>
-            </div>
-
-            {/* Target CPA Slider */}
-            <div className="space-y-2 pb-2">
-              <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
-                <span>TARGET CPA</span>
-                <span className="text-white font-bold">${kpis.targetCpa}</span>
-              </div>
-              <div className="flex items-center">
-                <input 
-                  type="range"
-                  min="30"
-                  max="300"
-                  step="10"
-                  value={kpis.targetCpa}
-                  onChange={(e) => saveKPIs({ ...kpis, targetCpa: parseInt(e.target.value) })}
-                  className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                />
-              </div>
-            </div>
-
-            {/* Estimated gross revenue performance indicators */}
-            <div className="border-t border-slate-700 pt-4 space-y-2 font-mono text-sm">
-              <div className="flex justify-between text-slate-400">
-                <span>Est. Target Conv. Rate:</span>
-                <span className="text-white font-bold">{(convRateBase * 100).toFixed(1)}%</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Projected Monthly Revenue:</span>
-                <span className="text-emerald-500 font-extrabold flex items-center">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  ${estimatedRevenue.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-          </div>
-
         </div>
+        {open ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+      </button>
 
-        {/* COLUMN RIGHT: INTERACTIVE TABBED BLUEPRINTS PLAYBOOKS */}
-        <div className="lg:col-span-8 space-y-6 bento-card p-6 sm:p-8">
-          
-          <div className="border-b border-slate-700">
-            <h3 className="text-xl font-display font-extrabold text-white mb-4 flex items-center leading-none">
-              <BookOpen className="h-5.5 w-5.5 text-blue-600 mr-2" />
-              Use-Case Specific Playbooks
-            </h3>
-            
-            {/* Top Navigation categories */}
-            <div className="flex flex-wrap -mb-px text-sm font-mono font-medium gap-1 sm:gap-2">
-              <button
-                id="tab-search-ppc"
-                onClick={() => setActiveTab('search')}
-                className={`px-4 py-3 border-b-2 rounded-t-lg transition-all ${
-                  activeTab === 'search' 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
-                }`}
-              >
-                Google Search PPC
-              </button>
-              
-              <button
-                id="tab-lsa-checklist"
-                onClick={() => setActiveTab('lsa')}
-                className={`px-4 py-3 border-b-2 rounded-t-lg transition-all ${
-                  activeTab === 'lsa' 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
-                }`}
-              >
-                Google LSA Voice
-              </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }}
+            className="overflow-hidden border-t border-slate-800">
+            <div className="p-5 space-y-5">
 
-              <button
-                id="tab-react-templates"
-                onClick={() => setActiveTab('reactivation')}
-                className={`px-4 py-3 border-b-2 rounded-t-lg transition-all ${
-                  activeTab === 'reactivation' 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
-                }`}
-              >
-                List Reactivation
-              </button>
+              {/* Keywords */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Target Keywords</span>
+                  <CopyButton text={group.keywords.join('\n')} label="Copy All" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {group.keywords.map((kw, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-mono rounded-lg">
+                      +{kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-              <button
-                id="tab-call-scripts"
-                onClick={() => setActiveTab('callscript')}
-                className={`px-4 py-3 border-b-2 rounded-t-lg transition-all ${
-                  activeTab === 'callscript' 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
-                }`}
-              >
-                Intake Call Script
-              </button>
-            </div>
-          </div>
+              {/* Negative Keywords */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <AlertTriangle className="h-3 w-3 text-red-400" /> Negative Keywords
+                  </span>
+                  <CopyButton text={group.negativeKeywords.map(k => `-${k}`).join('\n')} label="Copy" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {group.negativeKeywords.slice(0, 8).map((kw, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-red-500/5 border border-red-500/20 text-red-400 text-xs font-mono rounded-lg">
+                      -{kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-          {/* TAB CONTENTS PANELS */}
-          <div className="mt-4 transition-all">
-            
-            {/* 1. GOOGLE SEARCH PRESET CONFIGURATOR */}
-            {activeTab === 'search' && (
-              <div className="space-y-6" id="playbook-search-panel">
-                {showWizard ? (
-                  <div className="p-6 bg-slate-900 border border-blue-500/50 rounded-xl animate-fade-in relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-blue-400 to-emerald-400"></div>
-                    <div className="flex justify-between items-start mb-6">
-                      <div>
-                        <h4 className="text-xl font-display font-bold text-white flex items-center">
-                          <CheckCheck className="h-6 w-6 mr-2 text-blue-400" />
-                          Launch Configuration Wizard
-                        </h4>
-                        <p className="text-sm text-slate-400 mt-1">Follow these 3 steps to replicate our high-converting template perfectly.</p>
-                      </div>
-                      <button 
-                        onClick={() => setShowWizard(false)}
-                        className="text-slate-400 hover:text-white transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-
-                    <div className="space-y-6">
-                      {/* Step 1 */}
-                      <div className="flex gap-4">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-blue-900/50 border border-blue-500/50 flex items-center justify-center font-bold text-blue-400 font-mono">1</div>
-                        <div className="flex-1">
-                          <h5 className="text-white font-bold mb-1">Create Campaign</h5>
-                          <p className="text-xs text-slate-400 mb-3">Login to Google Ads &gt; New Campaign &gt; Leads &gt; Search Network.</p>
-                        </div>
-                      </div>
-
-                      {/* Step 2 */}
-                      <div className="flex gap-4">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-blue-900/50 border border-blue-500/50 flex items-center justify-center font-bold text-blue-400 font-mono">2</div>
-                        <div className="flex-1">
-                          <h5 className="text-white font-bold mb-1">Paste Targeted Keywords</h5>
-                          <p className="text-xs text-slate-400 mb-3">Copy this exact sequence to capture highest-intent search traffic.</p>
-                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 relative group">
-                            <pre className="text-xs text-blue-300 font-mono whitespace-pre-wrap">{googleSearchData.keywords.map(kw => `[${kw}]`).join('\n')}</pre>
-                            <button 
-                              onClick={() => handleCopyField(googleSearchData.keywords.map(kw => `[${kw}]`).join('\n'), 'keywords')}
-                              className="absolute top-2 right-2 bg-slate-800 hover:bg-slate-700 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              {copiedField === 'keywords' ? <CheckCheck className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Step 3 */}
-                      <div className="flex gap-4">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-blue-900/50 border border-blue-500/50 flex items-center justify-center font-bold text-blue-400 font-mono">3</div>
-                        <div className="flex-1">
-                          <h5 className="text-white font-bold mb-1">Paste Ad Copy</h5>
-                          <p className="text-xs text-slate-400 mb-3">Lock in our optimized ad framing to maximize your click-through rate.</p>
-                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center group">
-                            <div>
-                              <div className="text-[10px] text-slate-500 font-mono mb-1">HEADLINE 1</div>
-                              <div className="text-sm font-bold text-white">{googleSearchData.headlines[0]}</div>
-                            </div>
-                            <button 
-                              onClick={() => handleCopyField(googleSearchData.headlines[0], 'hl1')}
-                              className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              {copiedField === 'hl1' ? <><CheckCheck className="h-3 w-3 text-emerald-400" /> COPIED</> : <><Copy className="h-3 w-3" /> COPY</>}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-5 bg-blue-900/20 border border-blue-500/30 rounded-xl">
-                    <div className="flex items-start md:items-center justify-between flex-col md:flex-row gap-4">
-                      <div>
-                        <h4 className="text-lg font-display font-bold text-white flex items-center">
-                          <Search className="h-5 w-5 mr-2 text-blue-400" />
-                          Google Ads 1-Click Preset
-                        </h4>
-                        <p className="text-sm text-slate-300 mt-1 leading-relaxed max-w-2xl">
-                          We've pre-configured the perfect high-urgency campaign for <strong className="text-white">{city}</strong>. Just copy these settings into your Google Ads account to start capturing local leads instantly.
-                        </p>
-                      </div>
-                      <button 
-                        onClick={() => setShowWizard(true)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-2 shrink-0"
-                      >
-                        <Search className="h-3.5 w-3.5" /> Launch Preset
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Campaign Structure Presets */}
-                  <div className="space-y-3">
-                    <h5 className="font-display font-bold text-sm text-white border-b border-slate-800 pb-2">Campaign Settings</h5>
-                    <ul className="space-y-2 text-sm text-slate-300">
-                      <li className="flex justify-between bg-slate-900/50 p-2.5 rounded border border-slate-800">
-                        <span className="text-slate-400">Network:</span>
-                        <strong className="text-white">Search Network Only</strong>
-                      </li>
-                      <li className="flex justify-between bg-slate-900/50 p-2.5 rounded border border-slate-800">
-                        <span className="text-slate-400">Location Targeting:</span>
-                        <strong className="text-blue-400">{city} Metro (15mi radius)</strong>
-                      </li>
-                      <li className="flex justify-between bg-slate-900/50 p-2.5 rounded border border-slate-800">
-                        <span className="text-slate-400">Bidding Strategy:</span>
-                        <strong className="text-white">Maximize Conversions</strong>
-                      </li>
-                    </ul>
+              {/* Ad Copy */}
+              {ad && (
+                <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Responsive Search Ad</span>
+                    <CopyButton text={`Headlines:\n${ad.headlines.map(h => h.text).join('\n')}\n\nDescriptions:\n${ad.descriptions.map(d => d.text).join('\n')}`} label="Copy Ad" />
                   </div>
 
-                  {/* Ready-to-use Keywords */}
-                  <div className="space-y-3">
-                    <h5 className="font-display font-bold text-sm text-white border-b border-slate-800 pb-2">Top Performing Keywords</h5>
-                    <div className="bg-slate-900 border border-slate-800 p-3 rounded-lg text-slate-200 text-sm font-mono space-y-1.5 overflow-hidden">
-                      {googleSearchData.keywords.slice(0, 4).map((kw, i) => (
-                        <div 
-                          key={i} 
-                          onClick={() => handleCopyField(kw, `kw_${i}`)}
-                          className="flex justify-between items-center group cursor-pointer"
-                        >
-                          <span className="truncate mr-2">{kw}</span>
-                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-blue-400 font-bold transition-opacity">
-                            {copiedField === `kw_${i}` ? 'COPIED' : 'COPY'}
+                  {/* Ad Preview */}
+                  <div className="bg-white rounded-xl p-4 text-left">
+                    <div className="text-xs text-slate-500 mb-1 font-sans">Ad · yourwebsite.com/{ad.path1}/{ad.path2}</div>
+                    <div className="text-blue-700 font-bold text-base leading-tight font-sans">
+                      {ad.headlines[0]?.text} | {ad.headlines[1]?.text} | {ad.headlines[2]?.text}
+                    </div>
+                    <div className="text-slate-600 text-sm mt-1.5 font-sans leading-relaxed">
+                      {ad.descriptions[0]?.text}
+                    </div>
+                  </div>
+
+                  {/* All headlines */}
+                  <div>
+                    <div className="text-xs text-slate-500 font-mono mb-2">All Headlines ({ad.headlines.length})</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      {ad.headlines.map((h, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <span className="text-slate-600 font-mono w-4 shrink-0">{i + 1}.</span>
+                          <span className="text-slate-300 font-medium truncate">{h.text}</span>
+                          <span className={`shrink-0 text-[10px] font-mono ${h.text.length <= 30 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {h.text.length}/30
                           </span>
                         </div>
                       ))}
                     </div>
                   </div>
+
+                  {/* Descriptions */}
+                  <div>
+                    <div className="text-xs text-slate-500 font-mono mb-2">Descriptions ({ad.descriptions.length})</div>
+                    <div className="space-y-2">
+                      {ad.descriptions.map((d, i) => (
+                        <div key={i} className="text-xs text-slate-300 bg-slate-900 rounded-lg p-3 leading-relaxed">
+                          {d.text}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── Reddit urgency badge ─────────────────────────────────────────────────────
+function UrgencyBadge({ urgency }: { urgency: RedditPost['urgency'] }) {
+  const cfg = {
+    HIGH:   'bg-red-500/20 border-red-500/40 text-red-300',
+    MEDIUM: 'bg-orange-500/20 border-orange-500/40 text-orange-300',
+    LOW:    'bg-slate-700/50 border-slate-600 text-slate-400',
+  }[urgency];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold uppercase ${cfg}`}>
+      {urgency === 'HIGH' && <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />}
+      {urgency}
+    </span>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+export default function Campaign({ scannedData, onNavigateToScan }: CampaignProps) {
+  const [activeTab, setActiveTab]       = useState<Tab>('google-ads');
+  const [campaign, setCampaign]         = useState<GoogleAdsCampaign | null>(null);
+  const [lsaChecklist, setLsaChecklist] = useState<{ item: string; completed: boolean }[]>([]);
+  const [emailTemplate, setEmailTemplate] = useState<{ subject: string; body: string } | null>(null);
+  const [redditPosts, setRedditPosts]   = useState<RedditPost[]>([]);
+  const [redditLoading, setRedditLoading] = useState(true);
+  const [csvDownloaded, setCsvDownloaded] = useState(false);
+  const [generating, setGenerating]     = useState(true);
+
+  const city     = scannedData?.city     || 'Austin';
+  const industry = scannedData?.industry || 'HVAC';
+  const service  = scannedData?.serviceText || 'Emergency Repair';
+
+  useEffect(() => {
+    generateAll();
+  }, [city, industry, service]);
+
+  const generateAll = async () => {
+    setGenerating(true);
+
+    // Slight delay for animation effect
+    await new Promise(r => setTimeout(r, 800));
+
+    const newCampaign = generateGoogleAdsCampaign(city, industry, service, `Weather trigger detected in ${city}`);
+    const checklist   = getLSAChecklist(industry);
+    const email       = generateEmailTemplate(city, industry, service, `Active weather trigger in ${city}`);
+
+    setCampaign(newCampaign);
+    setLsaChecklist(checklist);
+    setEmailTemplate(email);
+    setGenerating(false);
+
+    // Load Reddit async
+    const posts = await fetchRedditLeads(city, industry, service);
+    setRedditPosts(posts);
+    setRedditLoading(false);
+  };
+
+  const handleDownloadCSV = () => {
+    if (!campaign) return;
+    const csv = exportCampaignToCSV(campaign);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `jobleak-${city}-${industry}-campaign.csv`.replace(/\s+/g, '-').toLowerCase();
+    a.click();
+    URL.revokeObjectURL(url);
+    setCsvDownloaded(true);
+    setTimeout(() => setCsvDownloaded(false), 3000);
+  };
+
+  const toggleLSA = (i: number) => {
+    setLsaChecklist(prev => prev.map((item, idx) => idx === i ? { ...item, completed: !item.completed } : item));
+  };
+
+  const highReddit = redditPosts.filter(p => p.urgency === 'HIGH').length;
+
+  const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
+    { id: 'google-ads', label: 'Google Ads',   icon: Search },
+    { id: 'email',      label: 'Email Template', icon: Mail },
+    { id: 'lsa',        label: 'LSA Checklist',  icon: List },
+    { id: 'reddit',     label: `Community Leads${highReddit > 0 ? ` (${highReddit})` : ''}`, icon: MessageSquare },
+  ];
+
+  // ── Guard ────────────────────────────────────────────────────────────────────
+  if (!scannedData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="text-center space-y-4">
+          <Sparkles className="h-16 w-16 text-slate-600 mx-auto" />
+          <p className="text-slate-400 text-lg">No scan data. Run a scan first.</p>
+          <button onClick={onNavigateToScan}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all">
+            Start Scan
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+      {/* BG blobs */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10 space-y-8">
+
+        {/* ── HEADER ── */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
+          className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-full mb-4">
+              <Sparkles className="h-4 w-4 text-indigo-400 animate-pulse" />
+              <span className="text-xs font-mono font-black tracking-widest text-indigo-400 uppercase">Campaign Engine</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-display font-black text-white leading-tight">
+              Your Campaign is{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+                Ready to Deploy
+              </span>
+            </h1>
+            <p className="text-slate-400 mt-2 text-lg">
+              {city} · {industry} · {service}
+            </p>
+          </div>
+
+          {/* Download CSV */}
+          <motion.button
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={handleDownloadCSV}
+            disabled={generating || !campaign}
+            className={`shrink-0 flex items-center gap-3 px-6 py-4 rounded-2xl font-display font-black text-base uppercase tracking-wider shadow-xl transition-all ${
+              csvDownloaded
+                ? 'bg-emerald-600 text-white border border-emerald-500'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed'
+            }`}>
+            {csvDownloaded ? <CheckCircle className="h-5 w-5" /> : <Download className="h-5 w-5" />}
+            {csvDownloaded ? 'Downloaded!' : 'Download CSV'}
+          </motion.button>
+        </motion.div>
+
+        {/* ── GENERATING STATE ── */}
+        {generating ? (
+          <div className="text-center py-32 space-y-5">
+            <div className="relative w-24 h-24 mx-auto">
+              <div className="w-24 h-24 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <Sparkles className="h-8 w-8 text-blue-400 absolute inset-0 m-auto" />
+            </div>
+            <p className="text-white font-bold text-2xl">Building Your Campaign...</p>
+            <div className="space-y-2 text-sm text-slate-400 max-w-sm mx-auto">
+              <p>Generating weather-triggered ad copy</p>
+              <p>Building keyword lists</p>
+              <p>Creating email templates</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ── METRICS BAR ── */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { icon: Target, label: 'Ad Groups', value: `${campaign?.adGroups.length || 3}`, color: 'blue' },
+                { icon: Search, label: 'Keywords', value: `${campaign?.adGroups.reduce((s, g) => s + g.keywords.length, 0) || '--'}`, color: 'indigo' },
+                { icon: TrendingUp, label: 'Est. Monthly Leads', value: campaign?.estimatedMetrics.estimatedLeadsPerMonth || '--', color: 'emerald' },
+                { icon: DollarSign, label: 'Avg CPC', value: campaign?.estimatedMetrics.cpc || '--', color: 'orange' },
+              ].map((m, i) => (
+                <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 + i * 0.07 }}
+                  className={`bg-${m.color}-500/10 border border-${m.color}-500/20 backdrop-blur-xl rounded-2xl p-5`}>
+                  <m.icon className={`h-6 w-6 text-${m.color}-400 mb-3`} />
+                  <div className={`text-2xl font-display font-black text-${m.color}-400`}>{m.value}</div>
+                  <div className="text-slate-400 text-xs mt-1 font-mono">{m.label}</div>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* ── TABS ── */}
+            <div className="flex gap-1 bg-slate-900/80 border border-slate-800 rounded-2xl p-1.5 overflow-x-auto">
+              {tabs.map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 min-w-max flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}>
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                  {tab.id === 'reddit' && !redditLoading && highReddit > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* ── TAB: GOOGLE ADS ── */}
+            {activeTab === 'google-ads' && campaign && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
+                className="space-y-6">
+
+                {/* Campaign info banner */}
+                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-start">
+                  <div className="flex-1 space-y-1">
+                    <div className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Campaign Name</div>
+                    <div className="text-white font-bold flex items-center gap-2 flex-wrap">
+                      <span>{campaign.campaignName}</span>
+                      <CopyButton text={campaign.campaignName} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm shrink-0">
+                    {[
+                      { label: 'Budget', value: campaign.budgetRecommendation },
+                      { label: 'Bid Strategy', value: campaign.bidStrategy.split(' ').slice(0, 3).join(' ') },
+                      { label: 'Targeting', value: campaign.targeting.radius + ' radius' },
+                      { label: 'Schedule', value: campaign.targeting.schedule.split(',')[0] },
+                    ].map((info, i) => (
+                      <div key={i}>
+                        <div className="text-slate-500 text-[10px] font-mono uppercase">{info.label}</div>
+                        <div className="text-slate-200 font-medium text-xs mt-0.5">{info.value}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Pre-written Ads */}
-                <div className="space-y-3 pt-2">
-                  <h5 className="font-display font-bold text-sm text-white">Pre-written High-Converting Ads</h5>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {googleSearchData.headlines.map((hl, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => handleCopyField(hl, `ad_hl_${i}`)}
-                        className="bg-slate-900/50 hover:bg-slate-800 border border-slate-800 p-4 rounded-xl transition-colors group cursor-pointer"
-                      >
-                        <div className="text-xs text-blue-400 font-mono mb-1 flex justify-between">
-                          Headline {i + 1}
-                          {copiedField === `ad_hl_${i}` && <CheckCheck className="h-3 w-3 text-emerald-400" />}
-                        </div>
-                        <div className="text-sm text-white font-medium">{hl}</div>
-                        <div className="mt-2 text-[10px] text-slate-500 group-hover:text-slate-300">
-                          {copiedField === `ad_hl_${i}` ? 'Copied to clipboard!' : 'Click to copy'}
+                {/* Campaign negative keywords */}
+                <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-red-400" />
+                      <span className="text-sm font-bold text-white">Campaign-Level Negative Keywords</span>
+                      <span className="text-xs text-slate-400">Block irrelevant traffic</span>
+                    </div>
+                    <CopyButton text={campaign.campaignNegativeKeywords.map(k => `-${k}`).join('\n')} label="Copy All" />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {campaign.campaignNegativeKeywords.map((kw, i) => (
+                      <span key={i} className="px-2.5 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono rounded-lg">
+                        -{kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ad groups */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-display font-black text-white flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-400" />
+                    Ad Groups ({campaign.adGroups.length})
+                  </h3>
+                  {campaign.adGroups.map((group, i) => (
+                    <AdGroupCard key={i} group={group} index={i} />
+                  ))}
+                </div>
+
+                {/* Estimated metrics */}
+                <div className="bg-gradient-to-br from-emerald-950/40 to-teal-950/40 border border-emerald-500/30 rounded-2xl p-6">
+                  <h3 className="text-lg font-display font-black text-white mb-5 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-emerald-400" />
+                    Estimated Campaign Performance
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    {Object.entries(campaign.estimatedMetrics).map(([key, val]) => (
+                      <div key={key} className="text-center bg-slate-900/50 rounded-xl p-3">
+                        <div className="text-emerald-400 font-display font-black text-xl">{val}</div>
+                        <div className="text-slate-400 text-[10px] font-mono uppercase mt-1">
+                          {key.replace(/([A-Z])/g, ' $1').trim()}
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
+
+                {/* Download CTA */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={handleDownloadCSV}
+                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-display font-black text-base uppercase tracking-wider rounded-xl shadow-2xl transition-all flex items-center justify-center gap-3 relative overflow-hidden group">
+                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                    <Download className="h-5 w-5 relative z-10" />
+                    <span className="relative z-10">Download Google Ads CSV</span>
+                    <ArrowRight className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                  <a href="https://ads.google.com" target="_blank" rel="noopener noreferrer">
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      className="w-full sm:w-auto px-6 py-4 bg-slate-800 border border-slate-700 hover:border-slate-600 text-white font-bold rounded-xl transition-all flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4" /> Open Google Ads
+                    </motion.button>
+                  </a>
+                </div>
+              </motion.div>
             )}
 
-            {/* 2. GOOGLE LSA CHECKLIST */}
-            {activeTab === 'lsa' && (
-              <div className="space-y-6" id="playbook-lsa-panel">
-                <div className="p-4 bg-indigo-900/20 border border-indigo-500/30 rounded-lg">
-                  <h4 className="text-sm font-mono font-bold uppercase text-indigo-400 flex items-center">
-                    <PhoneCall className="h-4 w-4 mr-1.5" />
-                    Local Services Ads configuration Rules
-                  </h4>
-                  <p className="text-sm text-slate-300 mt-1 leading-relaxed">
-                    LSA runs primarily on voice leads and direct telephone rings. Unlike standard Google Ads, you pay strictly per qualified caller rather than clicks. This is ideal for HVAC furnace freeze surges or hurricane roof damage repairs when users call the top 3 cards directly on small mobile screens.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {lsaChecklist.map((task, idx) => {
-                    const taskId = `lsa-task-${idx}`;
-                    const isChecked = kpis.checkedTasks.includes(taskId);
-                    return (
-                      <div 
-                        key={idx} 
-                        onClick={() => handleToggleTask(taskId)}
-                        className={`p-4 rounded-xl border transition-all cursor-pointer flex items-start space-x-3 select-none ${
-                          isChecked 
-                            ? 'bg-blue-900/20 border-blue-500/30' 
-                            : 'bg-slate-900/50 border-slate-700/80 hover:bg-slate-800'
-                        }`}
-                      >
-                        <div className="mt-0.5 shrink-0">
-                          {isChecked ? (
-                            <CheckSquare className="h-4 w-4 text-blue-400" />
-                          ) : (
-                            <div className="h-4 w-4 border border-slate-500 bg-slate-900 rounded" />
-                          )}
-                        </div>
-                        
-                        <div>
-                          <h5 className={`font-display font-bold text-sm ${isChecked ? 'text-blue-200 line-through' : 'text-white'}`}>
-                            {task.title}
-                          </h5>
-                          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{task.desc}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* 3. LIST REACTIVATION TAB */}
-            {activeTab === 'reactivation' && (
-              <div className="space-y-6" id="playbook-react-panel">
-                <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg">
-                  <h4 className="text-sm font-mono font-bold uppercase text-purple-800 flex items-center">
-                    <Send className="h-4 w-4 mr-1.5" />
-                    Zero Cost Broadcast Copywriting
-                  </h4>
-                  <p className="text-sm text-slate-300 mt-1 leading-relaxed">
-                    Re-energize your current customer logs or list nodes. Sending an emergency local forecast warning with a priority booking booking calendar bypasses standard Google bidding costs.
-                  </p>
-                </div>
-
-                {/* Email template */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-mono text-[10px] text-slate-400">OUTBOUND EMAIL BODY</span>
-                    <span className="text-[9px] font-mono text-emerald-600 block bg-emerald-50 px-2 rounded font-bold">100% LOCALIZED copy</span>
+            {/* ── TAB: EMAIL TEMPLATE ── */}
+            {activeTab === 'email' && emailTemplate && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
+                className="space-y-6">
+                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-display font-black text-white flex items-center gap-2">
+                      <Mail className="h-6 w-6 text-blue-400" />
+                      Reactivation Email Template
+                    </h3>
+                    <CopyButton text={`Subject: ${emailTemplate.subject}\n\n${emailTemplate.body}`} label="Copy Full Email" />
                   </div>
-                  
-                  <div className="bg-slate-900 text-slate-200 rounded border border-slate-800 p-5 font-sans space-y-3 text-sm leading-relaxed">
-                    <div className="font-mono text-[10px] text-purple-400 border-b border-slate-800 pb-2 mb-2">
-                      <strong>Subject:</strong> Emergency Local Advisory: Weather warning indicates immediate {industry.toLowerCase()} hazards in {city}
+
+                  {/* Subject line */}
+                  <div>
+                    <div className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Subject Line</div>
+                    <div className="flex items-center gap-3 bg-slate-950 border border-slate-700 rounded-xl p-4">
+                      <span className="text-white font-bold flex-1">{emailTemplate.subject}</span>
+                      <CopyButton text={emailTemplate.subject} label="Copy" />
                     </div>
-                    
-                    <p>Hi [Customer First Name],</p>
-                    
-                    <p>This is the engineering dispatch desk from [My Business] here in <strong>{city}</strong>.</p>
-                    
-                    <p>This morning, meteorology meters logged severe indicators across our local municipal grid. Current warning forecasts outline temperatures exceeding {maxTemp}°F (or severe wind/freeze alerts) which places intense stress on regional structures.</p>
-                    
-                    <p>If you have not executed seasonal maintenance checkups on your <strong>{serviceText.toLowerCase()}</strong> systems within the calendar year, you are at high risk of immediate structural blowout or leak damage.</p>
-                    
-                    <p>To support neighbors in <strong>{city}</strong>, we are dispatching emergency service operators across zip codes today. Tap below to check local coverage and schedule an inspection before emergency call queues spike:</p>
-                    
-                    <p className="font-bold underline text-blue-400 py-1">[Tap to Schedule Priority Coordinate Call]</p>
-                    
-                    <p className="text-slate-400">Respectfully,<br />The Dispatch Desk, [My Business Name]</p>
                   </div>
-                </div>
 
-                {/* Optional SMS block */}
-                <div className="space-y-2">
-                  <span className="font-mono text-[10px] text-slate-400 block">Outbound Opt-In SMS Template</span>
-                  <div className="p-4 bg-slate-950 text-slate-100 font-mono text-[11px] rounded leading-relaxed border border-slate-900">
-                    <p className="text-orange-400 mb-2">// SMS Restricted to Opt-In Contacts Only (160 Characters)</p>
-                    <p>"Hey [First Name] - Weather alert logs severe environmental stresses today in {city}. Lock in priority same-day {industry.toLowerCase()} inspections before {serviceText.toLowerCase()} emergencies spike. Direct reply back secures your spot. Stop to end."</p>
+                  {/* Email body */}
+                  <div>
+                    <div className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Email Body</div>
+                    <div className="bg-white rounded-2xl p-6 text-slate-800 font-sans text-sm leading-relaxed whitespace-pre-line shadow-xl">
+                      {emailTemplate.body}
+                    </div>
+                  </div>
+
+                  {/* Tips */}
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-5 space-y-2">
+                    <div className="text-sm font-bold text-blue-300 flex items-center gap-2">
+                      <Zap className="h-4 w-4" /> Pro Tips for Higher Open Rates
+                    </div>
+                    <ul className="space-y-1.5 text-sm text-slate-300">
+                      {[
+                        'Send within 2 hours of weather trigger for maximum relevance',
+                        'Replace [First Name] with actual customer names for 30% higher open rate',
+                        'Send between 7–9 AM or 5–7 PM for best engagement',
+                        'Add your logo and phone number above the CTA button',
+                      ].map((tip, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* 4. INTAKE CALL SCRIPT */}
-            {activeTab === 'callscript' && (
-              <div className="space-y-6" id="playbook-script-panel">
-                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
-                  <h4 className="text-sm font-mono font-bold uppercase text-emerald-800 flex items-center">
-                    <ClipboardList className="h-4 w-4 mr-1.5" />
-                    Qualifying Intake Workflows
-                  </h4>
-                  <p className="text-sm text-slate-300 mt-1 leading-relaxed">
-                    Once the phone rings, receptionist intake speed determines booking success. Lock down billing authorization and schedule coordinates within 4 minutes.
-                  </p>
+            {/* ── TAB: LSA CHECKLIST ── */}
+            {activeTab === 'lsa' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
+                className="space-y-6">
+                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-display font-black text-white flex items-center gap-2">
+                        <List className="h-6 w-6 text-emerald-400" />
+                        Local Services Ads (LSA) Setup Checklist
+                      </h3>
+                      <p className="text-slate-400 text-sm mt-1">Complete all items to go live with Google Guaranteed badge</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-display font-black text-emerald-400">
+                        {lsaChecklist.filter(i => i.completed).length}/{lsaChecklist.length}
+                      </div>
+                      <div className="text-slate-400 text-xs font-mono">completed</div>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden mb-6">
+                    <motion.div
+                      initial={{ width: '0%' }}
+                      animate={{ width: `${(lsaChecklist.filter(i => i.completed).length / lsaChecklist.length) * 100}%` }}
+                      transition={{ duration: 0.5 }}
+                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                    />
+                  </div>
+
+                  {/* Checklist items */}
+                  <div className="space-y-3">
+                    {lsaChecklist.map((item, i) => (
+                      <motion.button key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
+                        onClick={() => toggleLSA(i)}
+                        className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
+                          item.completed
+                            ? 'bg-emerald-500/10 border-emerald-500/30'
+                            : 'bg-slate-800/40 border-slate-700 hover:border-slate-600'
+                        }`}>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                          item.completed ? 'border-emerald-500 bg-emerald-500' : 'border-slate-600'
+                        }`}>
+                          {item.completed && <CheckCircle className="h-4 w-4 text-white" />}
+                        </div>
+                        <span className={`font-medium ${item.completed ? 'text-emerald-200 line-through' : 'text-slate-200'}`}>
+                          {item.item}
+                        </span>
+                        {item.completed && <span className="ml-auto text-xs text-emerald-400 font-mono font-bold">DONE</span>}
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  {lsaChecklist.every(i => i.completed) && (
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                      className="mt-6 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-center">
+                      <CheckCircle className="h-10 w-10 text-white mx-auto mb-2" />
+                      <p className="text-white font-display font-black text-xl">LSA Profile Ready!</p>
+                      <p className="text-emerald-100 text-sm mt-1">Your Google Guaranteed badge is within reach.</p>
+                    </motion.div>
+                  )}
                 </div>
-
-                <div className="space-y-4 text-sm font-sans">
-                  <div className="border-l-2 border-emerald-500 pl-4 space-y-1.5">
-                    <h5 className="font-mono text-[10px] uppercase font-bold text-slate-400">Step 1: Outbound Greeting</h5>
-                    <p className="text-slate-100 leading-relaxed font-medium">
-                      "Thank you for calling [My Business], your premier {industry} resource here in <strong>{city}</strong>. This is [Receptionist Name], are you calling to book a priority {serviceText} dispatch slot?"
-                    </p>
-                  </div>
-
-                  <div className="border-l-2 border-emerald-500 pl-4 space-y-1.5">
-                    <h5 className="font-mono text-[10px] uppercase font-bold text-slate-400">Step 2: Emergency Urgency Qualification</h5>
-                    <p className="text-slate-100 leading-relaxed">
-                      "How long have you noticed the {serviceText.toLowerCase()} issue? Under active {city} weather conditions, it is critical we address this quickly before structural damage forces costlier overhauls."
-                    </p>
-                  </div>
-
-                  <div className="border-l-2 border-emerald-500 pl-4 space-y-1.5">
-                    <h5 className="font-mono text-[10px] uppercase font-bold text-slate-400 font-semibold">Step 3: Secure the Dispatch Fee</h5>
-                    <p className="text-slate-100 leading-relaxed">
-                      "We have qualified technicians dispatching throughout your neighboring blocks this afternoon. Our standard diagnostic and mobilization fee is only $99, which we completely deduct from any repair work you finalize today. Shall we secure your slot with a credit card now?"
-                    </p>
-                  </div>
-                </div>
-              </div>
+              </motion.div>
             )}
 
-          </div>
+            {/* ── TAB: REDDIT LEADS ── */}
+            {activeTab === 'reddit' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
+                className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-display font-black text-white">Community Lead Signals</h3>
+                    <p className="text-slate-400 text-sm mt-1">Homeowners actively asking for {industry} help right now</p>
+                  </div>
+                  {!redditLoading && <span className="text-xs font-mono text-slate-400 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">{redditPosts.length} signals</span>}
+                </div>
 
-        </div>
-
+                {redditLoading ? (
+                  <div className="text-center py-20 space-y-3">
+                    <div className="w-12 h-12 border-3 border-t-transparent border-orange-500 rounded-full animate-spin mx-auto" style={{ borderWidth: 3 }} />
+                    <p className="text-slate-400">Scanning community boards...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {redditPosts.map((post, i) => (
+                      <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}
+                        className="group bg-slate-900/80 border border-slate-800 hover:border-slate-600 rounded-2xl p-6 transition-all">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <UrgencyBadge urgency={post.urgency} />
+                              <span className="text-xs text-slate-500 font-mono">r/{post.subreddit}</span>
+                              <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
+                                <Clock className="h-3 w-3" />{timeAgo(post.created_utc)}
+                              </span>
+                            </div>
+                            <h4 className="text-white font-bold leading-snug group-hover:text-blue-300 transition-colors">
+                              {post.title}
+                            </h4>
+                            {post.selftext && (
+                              <p className="text-slate-400 text-sm mt-2 leading-relaxed line-clamp-2">{post.selftext}</p>
+                            )}
+                            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                              <span>{post.score} upvotes</span>
+                              <span>{post.num_comments} comments</span>
+                            </div>
+                          </div>
+                          <a href={post.url} target="_blank" rel="noopener noreferrer"
+                            className="shrink-0 p-2 bg-slate-800 hover:bg-blue-600 rounded-lg transition-all">
+                            <ExternalLink className="h-4 w-4 text-slate-400 hover:text-white" />
+                          </a>
+                        </div>
+                        {post.urgency === 'HIGH' && (
+                          <div className="mt-4 pt-4 border-t border-slate-800 flex items-center gap-3">
+                            <Zap className="h-4 w-4 text-yellow-400 shrink-0" />
+                            <p className="text-xs text-slate-300">
+                              <span className="text-yellow-400 font-bold">High-value lead signal.</span>{' '}
+                              Consider responding to build local brand presence. Your Google Ads are already targeting this intent.
+                            </p>
+                          </div>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </>
+        )}
       </div>
-
     </div>
   );
 }
