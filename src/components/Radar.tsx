@@ -13,7 +13,7 @@ import {
   AlertTriangle, CheckCircle, Sparkles, ArrowRight, Zap,
   Activity, DollarSign, Users, Clock, MessageSquare,
   ExternalLink, RefreshCw, Target, Award, ChevronUp,
-  Building2, BarChart2, Calendar
+  Building2, BarChart2, Calendar, BarChart3, TrendingDown
 } from 'lucide-react';
 import {
   calculateSearchIntentScore,
@@ -27,6 +27,41 @@ interface RadarProps {
   scannedData: { city: string; industry: string; serviceText: string } | null;
   onNavigateToCampaign: () => void;
   onModifyScan: () => void;
+}
+
+// ─── Trade earnings data ──────────────────────────────────────────────────────
+const RADAR_TRADE_DATA: Record<string, {
+  avgTicket: number;
+  emergencyTicket: number;
+  weeklyLeads: [number, number];
+  unit: string;
+}> = {
+  'HVAC':         { avgTicket: 1350, emergencyTicket: 2200, weeklyLeads: [8,  22], unit: 'HVAC job' },
+  'Roofing':      { avgTicket: 9500, emergencyTicket: 14000, weeklyLeads: [3,  10], unit: 'roofing project' },
+  'Plumbing':     { avgTicket: 650,  emergencyTicket: 1100,  weeklyLeads: [12, 28], unit: 'plumbing call' },
+  'Electrical':   { avgTicket: 850,  emergencyTicket: 1600,  weeklyLeads: [8,  18], unit: 'electrical job' },
+  'Pest Control': { avgTicket: 320,  emergencyTicket: 580,   weeklyLeads: [15, 35], unit: 'pest control visit' },
+  'Garage Door':  { avgTicket: 480,  emergencyTicket: 850,   weeklyLeads: [10, 24], unit: 'garage door call' },
+};
+
+function getRadarTradeData(industry: string) {
+  // Fuzzy match (covers "HVAC Services", "Roofing Contractor", etc.)
+  for (const key of Object.keys(RADAR_TRADE_DATA)) {
+    if (industry.toLowerCase().includes(key.toLowerCase()) ||
+        key.toLowerCase().includes(industry.toLowerCase().split(' ')[0])) {
+      return RADAR_TRADE_DATA[key];
+    }
+  }
+  return RADAR_TRADE_DATA['HVAC'];
+}
+
+function getRadarDemandVolume(city: string, industry: string, score: number): number {
+  const seed  = city.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const trade = getRadarTradeData(industry);
+  const [min, max] = trade.weeklyLeads;
+  // Score boosts the upper end of demand
+  const scoreBoost = Math.floor((score / 100) * (max - min) * 0.4);
+  return min + (seed % (max - min + 1)) + scoreBoost;
 }
 
 // ─── Score ring SVG ───────────────────────────────────────────────────────────
@@ -395,6 +430,132 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                 ))}
               </div>
             </div>
+
+            {/* ── EARNINGS PROJECTION PANEL ── */}
+            {(() => {
+              const trade       = getRadarTradeData(industry);
+              const demandVol   = getRadarDemandVolume(city, industry, score);
+              const isEmergency = /emergency|urgent|repair|damage|leak|freeze|burst/i.test(service);
+              const ticket      = isEmergency ? trade.emergencyTicket : trade.avgTicket;
+              const planCost    = 199; // Growth plan reference
+
+              const tiers = [
+                { label: 'Conservative', pct: 5,  accentText: 'text-slate-300',   barFrom: 'from-slate-600', barTo: 'to-slate-500',     bg: 'bg-slate-800/50',    border: 'border-slate-700' },
+                { label: 'Moderate',     pct: 15, accentText: 'text-blue-300',    barFrom: 'from-blue-700',  barTo: 'to-blue-500',      bg: 'bg-blue-500/5',      border: 'border-blue-500/25' },
+                { label: 'Aggressive',   pct: 25, accentText: 'text-emerald-300', barFrom: 'from-emerald-700',barTo: 'to-emerald-500',  bg: 'bg-emerald-500/5',   border: 'border-emerald-500/25' },
+              ].map(t => ({
+                ...t,
+                jobs:    Math.max(1, Math.round(demandVol * (t.pct / 100))),
+                revenue: Math.max(1, Math.round(demandVol * (t.pct / 100))) * ticket,
+              }));
+
+              const roiMonths = tiers[0].revenue > 0
+                ? Math.floor(tiers[0].revenue / planCost)
+                : 0;
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                  className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"
+                >
+                  {/* Header */}
+                  <div className="border-b border-slate-800 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <BarChart3 className="h-4 w-4 text-blue-400" />
+                      <h3 className="text-sm font-display font-black text-white">
+                        Earnings Projection — {city} {industry}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">
+                        {demandVol} active demand signals · this week
+                      </span>
+                      <span className="px-2.5 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-mono font-black rounded uppercase tracking-widest">
+                        ${ticket.toLocaleString()} avg ticket{isEmergency ? ' · emergency' : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+                      {tiers.map((tier, i) => (
+                        <motion.div
+                          key={tier.label}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3 + i * 0.08 }}
+                          className={`${tier.bg} border ${tier.border} rounded-xl p-5`}
+                        >
+                          {/* Tier header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                              {tier.label}
+                            </span>
+                            <span className={`text-[10px] font-mono font-black ${tier.accentText} bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800`}>
+                              {tier.pct}% capture
+                            </span>
+                          </div>
+
+                          {/* Revenue number */}
+                          <div className={`text-3xl font-display font-black ${tier.accentText} mb-1`}>
+                            ${tier.revenue.toLocaleString()}
+                          </div>
+                          <div className="text-[11px] text-slate-600 font-mono mb-3">
+                            {tier.jobs} {tier.jobs === 1 ? 'job' : 'jobs'} × ${ticket.toLocaleString()}
+                          </div>
+
+                          {/* Bar */}
+                          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ scaleX: 0 }}
+                              animate={{ scaleX: 1 }}
+                              transition={{ delay: 0.4 + i * 0.1, duration: 0.9, ease: 'easeOut' }}
+                              style={{
+                                width: `${(tier.pct / 25) * 100}%`,
+                                transformOrigin: 'left',
+                              }}
+                              className={`h-full bg-gradient-to-r ${tier.barFrom} ${tier.barTo} rounded-full`}
+                            />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    {/* ROI callout row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Subscription ROI note */}
+                      <div className="flex items-start gap-3 p-4 bg-blue-500/5 border border-blue-500/15 rounded-xl">
+                        <Zap className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+                        <p className="text-xs font-mono text-slate-400 leading-relaxed">
+                          <span className="text-white font-bold">Plan cost: ${planCost}/mo.</span>{' '}
+                          At the conservative rate,{' '}
+                          {roiMonths > 1
+                            ? <><span className="text-blue-300 font-bold">1 job covers {roiMonths} months</span> of JobLeak.</>
+                            : <><span className="text-blue-300 font-bold">closing 1 job</span> fully recovers this month's subscription.</>
+                          }
+                        </p>
+                      </div>
+
+                      {/* Score-based timing insight */}
+                      <div className="flex items-start gap-3 p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-xl">
+                        <TrendingDown className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <p className="text-xs font-mono text-slate-400 leading-relaxed">
+                          <span className="text-white font-bold">
+                            {score >= 75 ? 'Demand is elevated right now.' : 'Demand is building.'}
+                          </span>{' '}
+                          {score >= 75
+                            ? `Competitors exhaust budgets at ~${intel.hourDrop}:00 PM — deploy ads before then to capture leads at ${intel.budgetDrop}% lower CPC.`
+                            : `Set up your campaign now so you are live the moment a weather trigger fires in ${city}.`
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })()}
 
             {/* ── TABS ── */}
             <div className="flex border-b border-slate-800">

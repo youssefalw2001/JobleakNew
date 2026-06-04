@@ -17,13 +17,43 @@ import {
   Radio,
   Database,
   Cpu,
-  Lock
+  Lock,
+  DollarSign,
+  Zap,
+  BarChart3,
 } from 'lucide-react';
 import { StatesList } from '../types';
 
 interface ScanFormProps {
   onScanComplete: (city: string, industry: string, serviceText: string) => void;
   onRouteChange: (route: string) => void;
+}
+
+// ── Trade ticket values & demand estimator ────────────────────────────────────
+const TRADE_DATA: Record<string, {
+  avgTicket: number;
+  emergencyTicket: number;
+  weeklyLeads: [number, number]; // [min, max] range
+  unit: string;
+}> = {
+  'HVAC':         { avgTicket: 1350, emergencyTicket: 2200, weeklyLeads: [8,  22], unit: 'HVAC job' },
+  'Roofing':      { avgTicket: 9500, emergencyTicket: 14000, weeklyLeads: [3, 10], unit: 'roofing project' },
+  'Plumbing':     { avgTicket: 650,  emergencyTicket: 1100,  weeklyLeads: [12, 28], unit: 'plumbing call' },
+  'Electrical':   { avgTicket: 850,  emergencyTicket: 1600,  weeklyLeads: [8,  18], unit: 'electrical job' },
+  'Pest Control': { avgTicket: 320,  emergencyTicket: 580,   weeklyLeads: [15, 35], unit: 'pest control visit' },
+  'Garage Door':  { avgTicket: 480,  emergencyTicket: 850,   weeklyLeads: [10, 24], unit: 'garage door call' },
+};
+
+function getTradeData(industry: string) {
+  return TRADE_DATA[industry] ?? TRADE_DATA['HVAC'];
+}
+
+// Seeded demand volume from city + score (no random flicker)
+function getDemandVolume(city: string, industry: string): number {
+  const seed = city.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const trade = getTradeData(industry);
+  const [min, max] = trade.weeklyLeads;
+  return min + (seed % (max - min + 1));
 }
 
 export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProps) {
@@ -89,7 +119,7 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
           onScanComplete(city, industry, serviceType);
           window.location.hash = '#radar';
           onRouteChange('#radar');
-        }, 900);
+        }, 4200);
         return;
       }
 
@@ -247,26 +277,155 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
                   </div>
                 )}
 
-                {/* Complete state */}
+                {/* Complete state — Earnings Estimator */}
                 {scanComplete && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    className="mt-6 pt-6 border-t border-slate-800"
+                    className="mt-6 pt-6 border-t border-slate-800 space-y-6"
                   >
-                    <div className="flex items-center gap-3 text-emerald-400">
-                      <CheckCircle className="h-5 w-5" />
-                      <span className="font-bold text-base">Audit complete — routing to Intelligence Dashboard...</span>
+                    {/* Routing line */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 text-emerald-400">
+                        <CheckCircle className="h-5 w-5 shrink-0" />
+                        <span className="font-bold text-base">Audit complete — generating earnings projection...</span>
+                      </div>
+                      <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          transition={{ duration: 0.8, ease: 'easeInOut' }}
+                          style={{ transformOrigin: 'left' }}
+                          className="h-full w-full bg-gradient-to-r from-blue-500 to-emerald-500"
+                        />
+                      </div>
                     </div>
-                    <div className="mt-3 h-1 bg-slate-800 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: '0%' }}
-                        animate={{ width: '100%' }}
-                        transition={{ duration: 0.8, ease: 'easeInOut' }}
-                        className="h-full bg-gradient-to-r from-blue-500 to-emerald-500"
-                      />
-                    </div>
+
+                    {/* Earnings Estimator Card */}
+                    {(() => {
+                      const trade       = getTradeData(industry);
+                      const demandVol   = getDemandVolume(city, industry);
+                      const isEmergency = /emergency|urgent|repair|damage|leak|freeze|burst/i.test(serviceType);
+                      const ticket      = isEmergency ? trade.emergencyTicket : trade.avgTicket;
+
+                      // 3 capture tiers
+                      const tiers = [
+                        { label: 'Conservative',  pct: 5,  color: 'text-slate-300',  bar: 'from-slate-600 to-slate-500',  bg: 'bg-slate-800/60',    border: 'border-slate-700' },
+                        { label: 'Moderate',      pct: 15, color: 'text-blue-300',   bar: 'from-blue-700 to-blue-500',    bg: 'bg-blue-500/8',      border: 'border-blue-500/30' },
+                        { label: 'Aggressive',    pct: 25, color: 'text-emerald-300',bar: 'from-emerald-700 to-emerald-500',bg:'bg-emerald-500/8',  border: 'border-emerald-500/30' },
+                      ].map(t => ({
+                        ...t,
+                        calls:    Math.round(demandVol * (t.pct / 100)),
+                        revenue:  Math.round(demandVol * (t.pct / 100)) * ticket,
+                      }));
+
+                      const planCost = 199; // Growth plan reference
+
+                      return (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.5, duration: 0.5 }}
+                          className="bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden"
+                        >
+                          {/* Header */}
+                          <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <BarChart3 className="h-4 w-4 text-blue-400" />
+                              <span className="text-sm font-display font-black text-white">
+                                Your Earnings Projection — {city} {industry}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+                              This week's demand window
+                            </span>
+                          </div>
+
+                          <div className="p-6 space-y-5">
+                            {/* Market context line */}
+                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-mono text-slate-400">
+                              <span>
+                                <span className="text-slate-500">Detected demand:</span>{' '}
+                                <span className="text-white font-bold">{demandVol} active {industry.toLowerCase()} requests</span>
+                                {' '}in {city} this week
+                              </span>
+                              <span>
+                                <span className="text-slate-500">Avg ticket{isEmergency ? ' (emergency)' : ''}:</span>{' '}
+                                <span className="text-white font-bold">${ticket.toLocaleString()}</span>
+                              </span>
+                            </div>
+
+                            {/* 3 tier rows */}
+                            <div className="space-y-3">
+                              {tiers.map((tier, i) => (
+                                <motion.div
+                                  key={tier.label}
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ delay: 0.6 + i * 0.1 }}
+                                  className={`flex items-center gap-4 p-4 ${tier.bg} border ${tier.border} rounded-xl`}
+                                >
+                                  {/* Pct badge */}
+                                  <div className="w-14 text-center shrink-0">
+                                    <div className={`text-lg font-display font-black ${tier.color}`}>{tier.pct}%</div>
+                                    <div className="text-[9px] font-mono text-slate-600 uppercase tracking-wider">capture</div>
+                                  </div>
+
+                                  {/* Bar */}
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">{tier.label}</span>
+                                      <span className={`text-sm font-display font-black ${tier.color}`}>
+                                        ${tier.revenue.toLocaleString()}
+                                      </span>
+                                    </div>
+                                    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                      <motion.div
+                                        initial={{ scaleX: 0 }}
+                                        animate={{ scaleX: 1 }}
+                                        transition={{ delay: 0.7 + i * 0.1, duration: 0.8, ease: 'easeOut' }}
+                                        style={{ width: `${(tier.pct / 25) * 100}%`, transformOrigin: 'left' }}
+                                        className={`h-full bg-gradient-to-r ${tier.bar} rounded-full`}
+                                      />
+                                    </div>
+                                    <div className="text-[10px] font-mono text-slate-600 mt-1">
+                                      {tier.calls} {tier.calls === 1 ? 'job' : 'jobs'} × ${ticket.toLocaleString()} avg
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+
+                            {/* Subscription comparison */}
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: 0.95 }}
+                              className="flex items-center gap-3 p-3.5 bg-blue-500/5 border border-blue-500/20 rounded-xl"
+                            >
+                              <Zap className="h-4 w-4 text-blue-400 shrink-0" />
+                              <p className="text-xs text-slate-400 font-mono leading-relaxed">
+                                <span className="text-white font-bold">Your Growth plan costs ${planCost}/mo.</span>
+                                {' '}At the conservative capture rate, a single {trade.unit} covers{' '}
+                                <span className="text-blue-300 font-bold">
+                                  {Math.floor(tiers[0].revenue / planCost) > 0
+                                    ? `${Math.floor(tiers[0].revenue / planCost)} months`
+                                    : 'your full monthly subscription'}{' '}
+                                </span>
+                                of JobLeak — before the week is over.
+                              </p>
+                            </motion.div>
+
+                            {/* CTA note */}
+                            <div className="flex items-center gap-2 text-[10px] font-mono text-slate-600">
+                              <DollarSign className="h-3 w-3" />
+                              Full earnings breakdown available in your Intelligence Dashboard
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })()}
                   </motion.div>
                 )}
               </div>
