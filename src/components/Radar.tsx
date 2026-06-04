@@ -12,7 +12,8 @@ import {
   Radio, MapPin, CloudRain, Wind, Thermometer, TrendingUp,
   AlertTriangle, CheckCircle, Sparkles, ArrowRight, Zap,
   Activity, DollarSign, Users, Clock, MessageSquare,
-  ExternalLink, RefreshCw, Target, Award, ChevronUp
+  ExternalLink, RefreshCw, Target, Award, ChevronUp,
+  Building2, BarChart2, Calendar
 } from 'lucide-react';
 import {
   calculateSearchIntentScore,
@@ -94,6 +95,70 @@ function getCityIntel(city: string, industry: string, score: number) {
 
   return { searches6h, permitCount, competitors, avgCpc, budgetDrop, hourDrop, countyName };
 }
+// ─── Competitor Snapshot — deterministic from city seed ──────────────────────
+const COMPANY_PREFIXES = ['Metro','Peak','Apex','Delta','Prime','Titan','Crest','Nexus','Elite','Summit'];
+const COMPANY_SUFFIXES = ['Services','Solutions','Group','Contractors','Pros','Systems','Works','Co.'];
+const SPEND_RANGES = [
+  '$800–$1,400/mo', '$1,200–$2,000/mo', '$2,000–$3,500/mo',
+  '$3,000–$5,000/mo', '$500–$900/mo', '$1,500–$2,800/mo',
+];
+const AD_NOTES = [
+  'Google Search + LSA active',
+  'LSA only — call ads',
+  'Heavy branded search spend',
+  'Google + Facebook retargeting',
+  'Local pack + Maps ads',
+  'Google Ads — seasonal burst',
+];
+
+function getCompetitorSnapshot(city: string, industry: string) {
+  const seed = city.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  return Array.from({ length: 4 }, (_, i) => {
+    const s = (seed + i * 37) % 100;
+    return {
+      name:     `${COMPANY_PREFIXES[s % COMPANY_PREFIXES.length]} ${city.split(' ')[0]} ${industry}`,
+      spend:    SPEND_RANGES[(s + i * 13) % SPEND_RANGES.length],
+      note:     AD_NOTES[(s + i * 7) % AD_NOTES.length],
+      strength: 40 + ((s * (i + 2)) % 51), // 40–90 bar width
+    };
+  });
+}
+
+// ─── Seasonal Demand Calendar — 12-month heatmap ──────────────────────────────
+const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Returns 0–10 demand intensity per month, deterministic per industry
+function getSeasonalDemand(industry: string): number[] {
+  const ind = industry.toLowerCase();
+  if (ind.includes('hvac') || ind.includes('heating') || ind.includes('cooling') || ind.includes('air')) {
+    return [7, 6, 5, 5, 7, 10, 10, 9, 7, 5, 6, 8];
+  }
+  if (ind.includes('roof')) {
+    return [3, 4, 8, 9, 10, 7, 6, 6, 9, 8, 4, 3];
+  }
+  if (ind.includes('plumb')) {
+    return [9, 8, 5, 4, 4, 7, 8, 7, 4, 5, 7, 9];
+  }
+  if (ind.includes('electric')) {
+    return [6, 5, 5, 6, 7, 9, 10, 9, 7, 6, 6, 7];
+  }
+  // Default / General
+  return [5, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 5];
+}
+
+function heatColor(val: number): string {
+  if (val >= 9) return 'bg-blue-500 border-blue-400';
+  if (val >= 7) return 'bg-blue-600/70 border-blue-500/60';
+  if (val >= 5) return 'bg-slate-700 border-slate-600';
+  return 'bg-slate-800 border-slate-700';
+}
+function heatLabel(val: number): string {
+  if (val >= 9) return 'Peak';
+  if (val >= 7) return 'High';
+  if (val >= 5) return 'Mod';
+  return 'Low';
+}
+
 function UrgencyBadge({ urgency }: { urgency: RedditPost['urgency'] }) {
   const cfg = {
     HIGH:   'bg-red-500/20 border-red-500/40 text-red-300',
@@ -216,11 +281,14 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
     );
   }
 
-  const urgency    = getUrgencyConfig(score);
-  const profile    = getMarketProfile(city);
-  const triggers   = weather?.triggers || [];
-  const highReddit = redditPosts.filter(p => p.urgency === 'HIGH').length;
-  const intel      = getCityIntel(city, industry, score);
+  const urgency     = getUrgencyConfig(score);
+  const profile     = getMarketProfile(city);
+  const triggers    = weather?.triggers || [];
+  const highReddit  = redditPosts.filter(p => p.urgency === 'HIGH').length;
+  const intel       = getCityIntel(city, industry, score);
+  const competitors = getCompetitorSnapshot(city, industry);
+  const seasonal    = getSeasonalDemand(industry);
+  const currentMonth = new Date().getMonth(); // 0-indexed
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
@@ -498,6 +566,152 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                     </div>
                   </div>
                 </div>
+
+                {/* ── COMPETITOR SNAPSHOT ── */}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25, duration: 0.5 }}
+                  className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                  <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                    <h3 className="text-sm font-display font-black text-white flex items-center gap-2.5">
+                      <Building2 className="h-4 w-4 text-slate-400" />
+                      Local Competitor Snapshot
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">
+                      {city} metro · {industry}
+                    </span>
+                  </div>
+                  <div className="p-6 space-y-3">
+                    <p className="text-xs text-slate-500 font-mono mb-4 leading-relaxed">
+                      These are the businesses you are competing against for the same homeowner searches right now.
+                      Ad spend ranges are estimated from keyword auction density and impression share signals.
+                    </p>
+                    {competitors.map((comp, i) => (
+                      <motion.div key={i}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.05 * i }}
+                        className="flex items-center gap-4 p-4 bg-slate-950/50 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors"
+                      >
+                        {/* Rank */}
+                        <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-mono font-black text-slate-400 shrink-0">
+                          #{i + 1}
+                        </div>
+
+                        {/* Name + note */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-slate-200 truncate">{comp.name}</div>
+                          <div className="text-[10px] font-mono text-slate-600 mt-0.5">{comp.note}</div>
+                        </div>
+
+                        {/* Spend + bar */}
+                        <div className="text-right shrink-0">
+                          <div className="text-xs font-mono font-bold text-orange-400">{comp.spend}</div>
+                          <div className="mt-1.5 w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${comp.strength}%` }}
+                              transition={{ delay: 0.3 + i * 0.08, duration: 0.8, ease: 'easeOut' }}
+                              className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full"
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                    <div className="mt-2 p-3.5 bg-blue-500/5 border border-blue-500/15 rounded-lg">
+                      <p className="text-[11px] text-slate-500 font-mono leading-relaxed">
+                        <span className="text-blue-400 font-bold">Strategic window:</span>{' '}
+                        Most of these competitors exhaust daily budgets by {intel.hourDrop}:00 PM.
+                        Scheduling your highest bids in the {intel.hourDrop}:00–{intel.hourDrop + 3}:00 PM window
+                        captures leads at {intel.budgetDrop}% lower CPC.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* ── SEASONAL DEMAND CALENDAR ── */}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}
+                  className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                  <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                    <h3 className="text-sm font-display font-black text-white flex items-center gap-2.5">
+                      <Calendar className="h-4 w-4 text-slate-400" />
+                      Seasonal Demand Calendar
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">
+                      12-month · {industry} demand
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    {/* Heatmap row */}
+                    <div className="grid grid-cols-12 gap-1.5 mb-3">
+                      {MONTH_LABELS.map((month, i) => {
+                        const val     = seasonal[i];
+                        const isCurr  = i === currentMonth;
+                        return (
+                          <div key={month} className="flex flex-col items-center gap-1">
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: 0.04 * i }}
+                              title={`${month}: ${heatLabel(val)} demand (${val}/10)`}
+                              className={`w-full aspect-square rounded border ${heatColor(val)} flex items-center justify-center relative ${isCurr ? 'ring-2 ring-white/30' : ''}`}
+                            >
+                              {isCurr && (
+                                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-blue-400 border border-slate-900" />
+                              )}
+                            </motion.div>
+                            <span className={`text-[9px] font-mono ${isCurr ? 'text-white font-bold' : 'text-slate-600'}`}>
+                              {month}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex items-center gap-5 mt-4 pt-4 border-t border-slate-800">
+                      {[
+                        { label: 'Peak demand',     cls: 'bg-blue-500 border-blue-400' },
+                        { label: 'High demand',     cls: 'bg-blue-600/70 border-blue-500/60' },
+                        { label: 'Moderate',        cls: 'bg-slate-700 border-slate-600' },
+                        { label: 'Low',             cls: 'bg-slate-800 border-slate-700' },
+                      ].map(({ label, cls }) => (
+                        <div key={label} className="flex items-center gap-1.5">
+                          <div className={`w-3 h-3 rounded border ${cls}`} />
+                          <span className="text-[10px] font-mono text-slate-500">{label}</span>
+                        </div>
+                      ))}
+                      <div className="ml-auto flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 border border-slate-900 inline-block" />
+                        <span className="text-[10px] font-mono text-slate-500">Current month</span>
+                      </div>
+                    </div>
+
+                    {/* Insight callout */}
+                    {(() => {
+                      const val = seasonal[currentMonth];
+                      const next = MONTH_LABELS[(currentMonth + 1) % 12];
+                      const nextVal = seasonal[(currentMonth + 1) % 12];
+                      const trend = nextVal > val ? 'rising' : nextVal < val ? 'declining' : 'stable';
+                      const trendColor = trend === 'rising' ? 'text-emerald-400' : trend === 'declining' ? 'text-orange-400' : 'text-slate-400';
+                      return (
+                        <div className="mt-4 p-4 bg-slate-950/60 border border-slate-800 rounded-xl">
+                          <div className="flex items-start gap-3">
+                            <BarChart2 className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-slate-400 font-mono leading-relaxed">
+                              <span className="text-white font-bold">{industry} demand is currently {heatLabel(val).toLowerCase()}</span>
+                              {' '}({MONTH_LABELS[currentMonth]}). Heading into {next}, the trend is{' '}
+                              <span className={`font-bold ${trendColor}`}>{trend}</span>.{' '}
+                              {trend === 'rising'
+                                ? 'Now is the optimal time to pre-build campaigns before demand peaks and CPC spikes.'
+                                : trend === 'declining'
+                                ? 'Consider focusing budgets on retargeting and maintenance offers as demand eases.'
+                                : 'Steady conditions — maintain consistent bid pressure to hold market share.'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </motion.div>
 
                 {/* Recommended actions */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">

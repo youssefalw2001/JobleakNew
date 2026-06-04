@@ -24,7 +24,10 @@ import {
   Award,
   Zap,
   Target,
-  DollarSign
+  DollarSign,
+  BarChart3,
+  ArrowUpRight,
+  Percent
 } from 'lucide-react';
 import { getLocalLeads } from '../supabase';
 import { Lead } from '../types';
@@ -573,6 +576,203 @@ export default function Dashboard() {
         </motion.div>
 
       </div>
+
+      {/* ── ROI CALCULATOR ──────────────────────────────────────────────────── */}
+      {(() => {
+        // Plan cost lookup
+        const planCost: Record<string, number> = { Starter: 99, Growth: 199, Pro: 299, 'Free Trial': 0 };
+        const monthlyCost = planCost[userPlan] ?? 199;
+
+        // Inbound calls this month (treat all logged calls as "this month" for demo)
+        const inboundCalls = currentUser
+          ? currentUser.loggedCalls.filter(c => c.status === 'Inbound').length
+          : 0;
+
+        // Revenue generated from logged calls
+        const revenueGenerated = inboundCalls * averageContractValue;
+
+        // ROI % = ((revenue - cost) / cost) * 100  — floor at 0 to avoid negatives when no calls
+        const roiPct = monthlyCost > 0 && revenueGenerated > 0
+          ? Math.round(((revenueGenerated - monthlyCost) / monthlyCost) * 100)
+          : 0;
+
+        // Breakeven = how many calls needed to cover the plan
+        const breakevenCalls = monthlyCost > 0
+          ? Math.ceil(monthlyCost / averageContractValue)
+          : 0;
+
+        // Progress toward breakeven (cap at 100%)
+        const breakevenProgress = breakevenCalls > 0
+          ? Math.min(100, Math.round((inboundCalls / breakevenCalls) * 100))
+          : 100;
+
+        const isBreakeven = inboundCalls >= breakevenCalls && monthlyCost > 0;
+
+        return (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"
+          >
+            {/* Header */}
+            <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-sm font-display font-black text-white flex items-center gap-2.5">
+                <BarChart3 className="h-4 w-4 text-slate-400" />
+                JobLeak ROI Calculator
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">
+                  {userPlan} · ${monthlyCost}/mo
+                </span>
+                {isBreakeven && monthlyCost > 0 && (
+                  <span className="px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-black rounded uppercase tracking-widest">
+                    Breakeven Reached
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6">
+              {currentUser && inboundCalls > 0 ? (
+                /* ── ACTIVE STATE: user has logged calls ── */
+                <div className="space-y-6">
+                  {/* Big ROI number */}
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-6">
+                    <div>
+                      <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1">
+                        Your JobLeak ROI this month
+                      </p>
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7, duration: 0.5 }}
+                        className="flex items-end gap-3"
+                      >
+                        <span className="text-5xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-400">
+                          {roiPct.toLocaleString()}%
+                        </span>
+                        <ArrowUpRight className="h-7 w-7 text-emerald-400 mb-1.5" />
+                      </motion.div>
+                      <p className="text-slate-500 text-xs font-mono mt-1.5">
+                        Based on {inboundCalls} inbound {inboundCalls === 1 ? 'call' : 'calls'} ×{' '}
+                        <span className="text-white font-bold">${averageContractValue.toLocaleString()}</span> avg ticket
+                        vs <span className="text-slate-400">${monthlyCost}/mo plan cost</span>
+                      </p>
+                    </div>
+
+                    {/* Stat tiles */}
+                    <div className="flex gap-3 sm:ml-auto">
+                      {[
+                        { label: 'Revenue Generated', value: `$${revenueGenerated.toLocaleString()}`, color: 'text-emerald-400', border: 'border-emerald-500/20', bg: 'bg-emerald-500/5' },
+                        { label: 'Plan Cost',          value: `$${monthlyCost}`,                       color: 'text-slate-400',   border: 'border-slate-700',       bg: 'bg-slate-800/50' },
+                        { label: 'Net Profit',         value: `$${(revenueGenerated - monthlyCost).toLocaleString()}`, color: 'text-blue-400', border: 'border-blue-500/20', bg: 'bg-blue-500/5' },
+                      ].map(tile => (
+                        <div key={tile.label} className={`${tile.bg} border ${tile.border} rounded-xl px-4 py-3 text-center min-w-[96px]`}>
+                          <div className={`text-xl font-display font-black ${tile.color}`}>{tile.value}</div>
+                          <div className="text-[9px] font-mono text-slate-600 mt-0.5 uppercase tracking-wider leading-tight">{tile.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Breakeven progress bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                        Breakeven Progress
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {inboundCalls} / {breakevenCalls} calls needed to cover plan cost
+                      </span>
+                    </div>
+                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${breakevenProgress}%` }}
+                        transition={{ delay: 0.8, duration: 1, ease: 'easeOut' }}
+                        className={`h-full rounded-full ${
+                          isBreakeven
+                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+                            : 'bg-gradient-to-r from-blue-600 to-indigo-500'
+                        }`}
+                      />
+                    </div>
+                    <p className="text-[10px] font-mono text-slate-600">
+                      {isBreakeven
+                        ? `All ${inboundCalls} calls logged — plan fully recovered. Every additional call is pure profit.`
+                        : `${breakevenCalls - inboundCalls} more inbound ${breakevenCalls - inboundCalls === 1 ? 'call' : 'calls'} needed to break even.`}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* ── EMPTY STATE: no calls logged yet ── */
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                  {/* Left: projection */}
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1">
+                        Projected ROI at breakeven
+                      </p>
+                      <div className="flex items-end gap-2">
+                        <span className="text-4xl font-display font-black text-slate-300">
+                          {monthlyCost > 0
+                            ? `${Math.round(((breakevenCalls * averageContractValue - monthlyCost) / monthlyCost) * 100)}%`
+                            : 'N/A'}
+                        </span>
+                        <Percent className="h-5 w-5 text-slate-500 mb-1.5" />
+                      </div>
+                      <p className="text-xs text-slate-600 font-mono mt-1">
+                        You need just{' '}
+                        <span className="text-white font-bold">{breakevenCalls} inbound {breakevenCalls === 1 ? 'call' : 'calls'}</span>
+                        {' '}to fully recover your ${monthlyCost}/mo investment.
+                      </p>
+                    </div>
+
+                    {/* Projection tiles */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { calls: 1,  label: '1 call' },
+                        { calls: 3,  label: '3 calls' },
+                        { calls: 10, label: '10 calls' },
+                      ].map(({ calls, label }) => {
+                        const rev = calls * averageContractValue;
+                        const roi = monthlyCost > 0 ? Math.round(((rev - monthlyCost) / monthlyCost) * 100) : 0;
+                        return (
+                          <div key={calls} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                            <div className="text-[10px] font-mono text-slate-600 uppercase tracking-wider mb-1">{label}</div>
+                            <div className={`text-lg font-display font-black ${roi > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                              {roi > 0 ? `+${roi}%` : `${roi}%`}
+                            </div>
+                            <div className="text-[9px] font-mono text-slate-600 mt-0.5">${rev.toLocaleString()} rev</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right: CTA */}
+                  <div className="sm:w-56 bg-blue-500/5 border border-blue-500/15 rounded-xl p-5 text-center space-y-3">
+                    <DollarSign className="h-8 w-8 text-blue-400 mx-auto" />
+                    <p className="text-xs text-slate-400 font-mono leading-relaxed">
+                      Log your first inbound call above to start tracking real ROI.
+                    </p>
+                    <button
+                      onClick={() => {
+                        // scroll to top to reveal Log Call button
+                        document.getElementById('dashboard-portal-root')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[11px] font-mono font-black uppercase tracking-widest rounded-lg hover:from-blue-500 hover:to-indigo-500 transition-all cursor-pointer"
+                    >
+                      Log First Call
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* CORE TABLES WORKSPACE */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
