@@ -9,7 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Sparkles, Download, Copy, CheckCircle, ArrowRight,
+  Download, Copy, CheckCircle, ArrowRight,
   Zap, Target, DollarSign, Mail, List, MessageSquare,
   ChevronDown, ChevronUp, ExternalLink, Clock,
   TrendingUp, AlertTriangle, Search, Users
@@ -246,10 +246,10 @@ export default function Campaign({ scannedData, onNavigateToScan }: CampaignProp
   const highReddit = redditPosts.filter(p => p.urgency === 'HIGH').length;
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: 'google-ads', label: 'Google Ads',   icon: Search },
-    { id: 'email',      label: 'Email Template', icon: Mail },
-    { id: 'lsa',        label: 'LSA Checklist',  icon: List },
-    { id: 'reddit',     label: `Community Leads${highReddit > 0 ? ` (${highReddit})` : ''}`, icon: MessageSquare },
+    { id: 'google-ads', label: 'Google Ads',      icon: Search },
+    { id: 'email',      label: 'Email Template',  icon: Mail },
+    { id: 'lsa',        label: 'LSA Checklist',   icon: List },
+    { id: 'reddit',     label: 'Community Leads', icon: MessageSquare },
   ];
 
   // ── Guard ────────────────────────────────────────────────────────────────────
@@ -257,10 +257,12 @@ export default function Campaign({ scannedData, onNavigateToScan }: CampaignProp
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="text-center space-y-4">
-          <Sparkles className="h-16 w-16 text-slate-600 mx-auto" />
-          <p className="text-slate-400 text-lg">No scan data. Run a scan first.</p>
+          <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto">
+            <Search className="h-6 w-6 text-slate-600" />
+          </div>
+          <p className="text-slate-400 text-lg">No scan data. Run a market scan first.</p>
           <button onClick={onNavigateToScan}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all">
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all text-sm uppercase tracking-wider">
             Start Scan
           </button>
         </div>
@@ -278,21 +280,20 @@ export default function Campaign({ scannedData, onNavigateToScan }: CampaignProp
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10 space-y-8">
 
-        {/* ── HEADER ── */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
+        {/* ── HEADER ── */}        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
           className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 rounded-full mb-4">
-              <Sparkles className="h-4 w-4 text-indigo-400 animate-pulse" />
-              <span className="text-xs font-mono font-black tracking-widest text-indigo-400 uppercase">Campaign Engine</span>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">Campaign Engine</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-display font-black text-white leading-tight">
-              Your Campaign is{' '}
+            <h1 className="text-4xl sm:text-5xl font-display font-black text-white leading-tight tracking-tight">
+              Campaign Ready{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-                Ready to Deploy
+                to Deploy
               </span>
             </h1>
-            <p className="text-slate-400 mt-2 text-lg">
+            <p className="text-slate-500 mt-2 text-sm font-mono">
               {city} · {industry} · {service}
             </p>
           </div>
@@ -314,51 +315,53 @@ export default function Campaign({ scannedData, onNavigateToScan }: CampaignProp
 
         {/* ── GENERATING STATE ── */}
         {generating ? (
-          <div className="text-center py-32 space-y-5">
-            <div className="relative w-24 h-24 mx-auto">
-              <div className="w-24 h-24 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              <Sparkles className="h-8 w-8 text-blue-400 absolute inset-0 m-auto" />
-            </div>
-            <p className="text-white font-bold text-2xl">Building Your Campaign...</p>
-            <div className="space-y-2 text-sm text-slate-400 max-w-sm mx-auto">
+          <div className="text-center py-28 space-y-5">
+            <div className="w-12 h-12 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin mx-auto" />
+            <p className="text-white font-display font-black text-xl tracking-tight">Building Campaign Package</p>
+            <div className="space-y-1.5 text-sm text-slate-500 font-mono max-w-xs mx-auto">
               <p>Generating weather-triggered ad copy</p>
-              <p>Building keyword lists</p>
-              <p>Creating email templates</p>
+              <p>Compiling keyword matrix</p>
+              <p>Preparing deployment assets</p>
             </div>
           </div>
         ) : (
           <>
             {/* ── METRICS BAR ── */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-800 border border-slate-800 rounded-xl overflow-hidden">
               {[
-                { icon: Target, label: 'Ad Groups', value: `${campaign?.adGroups.length || 3}`, color: 'blue' },
-                { icon: Search, label: 'Keywords', value: `${campaign?.adGroups.reduce((s, g) => s + g.keywords.length, 0) || '--'}`, color: 'indigo' },
-                { icon: TrendingUp, label: 'Est. Monthly Leads', value: campaign?.estimatedMetrics.estimatedLeadsPerMonth || '--', color: 'emerald' },
-                { icon: DollarSign, label: 'Avg CPC', value: campaign?.estimatedMetrics.cpc || '--', color: 'orange' },
+                { icon: Target,      label: 'Ad Groups',           value: `${campaign?.adGroups.length || 3}` },
+                { icon: Search,      label: 'Total Keywords',      value: `${campaign?.adGroups.reduce((s, g) => s + g.keywords.length, 0) || '--'}` },
+                { icon: TrendingUp,  label: 'Est. Monthly Leads',  value: campaign?.estimatedMetrics.estimatedLeadsPerMonth || '--' },
+                { icon: DollarSign,  label: 'Avg CPC Range',       value: campaign?.estimatedMetrics.cpc || '--' },
               ].map((m, i) => (
-                <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 + i * 0.07 }}
-                  className={`bg-${m.color}-500/10 border border-${m.color}-500/20 backdrop-blur-xl rounded-2xl p-5`}>
-                  <m.icon className={`h-6 w-6 text-${m.color}-400 mb-3`} />
-                  <div className={`text-2xl font-display font-black text-${m.color}-400`}>{m.value}</div>
-                  <div className="text-slate-400 text-xs mt-1 font-mono">{m.label}</div>
-                </motion.div>
+                <div key={i} className="bg-slate-900 px-5 py-4 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+                    <m.icon className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-display font-black text-white">{m.value}</div>
+                    <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{m.label}</div>
+                  </div>
+                </div>
               ))}
             </motion.div>
 
             {/* ── TABS ── */}
-            <div className="flex gap-1 bg-slate-900/80 border border-slate-800 rounded-2xl p-1.5 overflow-x-auto">
+            <div className="flex border-b border-slate-800">
               {tabs.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 min-w-max flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                  className={`flex items-center gap-2 px-5 py-3.5 text-sm font-bold border-b-2 transition-all -mb-px ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      ? 'border-blue-500 text-white'
+                      : 'border-transparent text-slate-500 hover:text-slate-300'
                   }`}>
                   <tab.icon className="h-4 w-4" />
                   {tab.label}
                   {tab.id === 'reddit' && !redditLoading && highReddit > 0 && (
-                    <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                    <span className="px-1.5 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-mono font-bold rounded">
+                      {highReddit}
+                    </span>
                   )}
                 </button>
               ))}
@@ -586,53 +589,57 @@ export default function Campaign({ scannedData, onNavigateToScan }: CampaignProp
                 className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xl font-display font-black text-white">Community Lead Signals</h3>
-                    <p className="text-slate-400 text-sm mt-1">Homeowners actively asking for {industry} help right now</p>
+                    <h3 className="text-lg font-display font-black text-white">Community Lead Signals</h3>
+                    <p className="text-slate-500 text-sm mt-0.5 font-mono">Homeowners publicly requesting {industry} services</p>
                   </div>
-                  {!redditLoading && <span className="text-xs font-mono text-slate-400 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">{redditPosts.length} signals</span>}
+                  {!redditLoading && (
+                    <span className="text-xs font-mono text-slate-600 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                      {redditPosts.length} signals indexed
+                    </span>
+                  )}
                 </div>
 
                 {redditLoading ? (
                   <div className="text-center py-20 space-y-3">
-                    <div className="w-12 h-12 border-3 border-t-transparent border-orange-500 rounded-full animate-spin mx-auto" style={{ borderWidth: 3 }} />
-                    <p className="text-slate-400">Scanning community boards...</p>
+                    <div className="w-8 h-8 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin mx-auto" />
+                    <p className="text-slate-600 text-xs font-mono uppercase tracking-widest">Indexing community boards</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {redditPosts.map((post, i) => (
-                      <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}
-                        className="group bg-slate-900/80 border border-slate-800 hover:border-slate-600 rounded-2xl p-6 transition-all">
+                      <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="group bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-5 transition-all">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <UrgencyBadge urgency={post.urgency} />
-                              <span className="text-xs text-slate-500 font-mono">r/{post.subreddit}</span>
-                              <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
+                              <span className="text-[10px] text-slate-600 font-mono">r/{post.subreddit}</span>
+                              <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1">
                                 <Clock className="h-3 w-3" />{timeAgo(post.created_utc)}
                               </span>
                             </div>
-                            <h4 className="text-white font-bold leading-snug group-hover:text-blue-300 transition-colors">
+                            <h4 className="text-sm text-slate-200 font-bold leading-snug group-hover:text-white transition-colors">
                               {post.title}
                             </h4>
                             {post.selftext && (
-                              <p className="text-slate-400 text-sm mt-2 leading-relaxed line-clamp-2">{post.selftext}</p>
+                              <p className="text-slate-500 text-xs mt-2 leading-relaxed line-clamp-2 font-mono">{post.selftext}</p>
                             )}
-                            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                            <div className="flex items-center gap-4 mt-2 text-[10px] text-slate-600 font-mono">
                               <span>{post.score} upvotes</span>
                               <span>{post.num_comments} comments</span>
                             </div>
                           </div>
                           <a href={post.url} target="_blank" rel="noopener noreferrer"
-                            className="shrink-0 p-2 bg-slate-800 hover:bg-blue-600 rounded-lg transition-all">
-                            <ExternalLink className="h-4 w-4 text-slate-400 hover:text-white" />
+                            className="shrink-0 p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all">
+                            <ExternalLink className="h-3.5 w-3.5 text-slate-500 hover:text-white" />
                           </a>
                         </div>
                         {post.urgency === 'HIGH' && (
-                          <div className="mt-4 pt-4 border-t border-slate-800 flex items-center gap-3">
-                            <Zap className="h-4 w-4 text-yellow-400 shrink-0" />
-                            <p className="text-xs text-slate-300">
-                              <span className="text-yellow-400 font-bold">High-value lead signal.</span>{' '}
-                              Consider responding to build local brand presence. Your Google Ads are already targeting this intent.
+                          <div className="mt-3 pt-3 border-t border-slate-800 flex items-start gap-2.5">
+                            <Zap className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
+                            <p className="text-xs text-slate-500 font-mono leading-relaxed">
+                              High-intent lead signal. Your Google Ads campaign is already targeting this search behavior.
                             </p>
                           </div>
                         )}

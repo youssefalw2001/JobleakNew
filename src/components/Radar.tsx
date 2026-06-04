@@ -205,18 +205,19 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
           className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-full mb-4">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              <span className="text-xs font-mono font-black tracking-widest text-blue-400 uppercase">Live Market Intelligence</span>
+              <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">Live Market Intelligence</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-display font-black text-white leading-tight">
-              {city} <span className="text-slate-500">·</span>{' '}
+            <h1 className="text-4xl sm:text-5xl font-display font-black text-white leading-tight tracking-tight">
+              {city}{' '}
+              <span className="text-slate-600">·</span>{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">{industry}</span>
             </h1>
-            <p className="text-slate-400 mt-2 text-lg">{service}</p>
+            <p className="text-slate-500 mt-2 text-sm font-mono">{service}</p>
           </div>
           <div className="flex items-center gap-3">
             <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -246,38 +247,50 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
 
               {/* SCORE CARD */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1, duration: 0.5 }}
-                className={`lg:col-span-1 bg-gradient-to-br ${urgency.gradient} backdrop-blur-xl border-2 ${urgency.border} rounded-3xl p-8 flex flex-col items-center justify-center relative overflow-hidden`}>
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${urgency.badge} mb-6`}>
-                  <span className={`w-2.5 h-2.5 rounded-full ${urgency.ring} animate-pulse`} />
-                  <span className="text-sm font-mono font-black uppercase tracking-wider">{urgency.label} PRIORITY</span>
+                className={`lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden`}>
+                {/* Subtle color tint based on score */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${urgency.gradient} opacity-60 pointer-events-none`} />
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border ${urgency.badge} mb-6 relative z-10`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${urgency.ring} animate-pulse`} />
+                  <span className="text-[10px] font-mono font-black uppercase tracking-widest">{urgency.label} PRIORITY</span>
                 </div>
-                <div className="relative">
+
+                <div className="relative z-10">
                   <ScoreRing score={score} size={180} />
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className={`text-6xl font-display font-black ${urgency.text}`}>{score}</span>
-                    <span className="text-slate-400 text-sm font-mono">/ 100</span>
+                    <span className="text-slate-600 text-xs font-mono tracking-wider">/ 100</span>
                   </div>
                 </div>
-                <p className="text-white font-bold text-xl mt-4">Opportunity Score</p>
-                <p className={`${urgency.text} text-sm mt-1 font-medium`}>{urgency.sublabel}</p>
+
+                <div className="relative z-10 text-center mt-5">
+                  <p className="text-white font-display font-black text-lg tracking-tight">Opportunity Score</p>
+                  <p className={`${urgency.text} text-xs mt-1 font-mono`}>{urgency.sublabel}</p>
+                </div>
               </motion.div>
 
               {/* WEATHER CARDS */}
-              <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="lg:col-span-2 grid grid-cols-2 gap-px bg-slate-800 rounded-2xl overflow-hidden border border-slate-800">
                 {[
-                  { icon: Thermometer, label: 'High Temp', value: `${weather?.maxTemp ?? '--'}°F`, sub: `Low: ${weather?.minTemp ?? '--'}°F`, color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
-                  { icon: Wind, label: 'Wind Gusts', value: `${weather?.maxWind ?? '--'} mph`, sub: weather?.maxWind && weather.maxWind >= 35 ? '⚠ Roofing Alert' : 'Normal levels', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
-                  { icon: CloudRain, label: 'Rain Chance', value: `${weather?.maxRainProb ?? '--'}%`, sub: weather?.maxRainProb && weather.maxRainProb >= 60 ? '⚠ Leak risk' : 'Low risk', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30' },
-                  { icon: TrendingUp, label: 'Market Growth', value: `+${profile.growth}%`, sub: `${profile.permitHeat} permits/mo`, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+                  { icon: Thermometer, label: 'High Temperature',  value: `${weather?.maxTemp ?? '--'}°F`,   sub: `Low: ${weather?.minTemp ?? '--'}°F`,  accent: 'text-orange-400' },
+                  { icon: Wind,        label: 'Wind Gusts',         value: `${weather?.maxWind ?? '--'} mph`, sub: weather?.maxWind && weather.maxWind >= 35 ? 'Roofing alert threshold' : 'Normal range', accent: 'text-blue-400' },
+                  { icon: CloudRain,   label: 'Precipitation Prob.', value: `${weather?.maxRainProb ?? '--'}%`, sub: weather?.maxRainProb && weather.maxRainProb >= 60 ? 'Elevated leak risk' : 'Low risk', accent: 'text-cyan-400' },
+                  { icon: TrendingUp,  label: 'Market Growth',      value: `+${profile.growth}%`,             sub: `${profile.permitHeat} active permits/mo`, accent: 'text-emerald-400' },
                 ].map((stat, i) => (
-                  <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 + i * 0.08, duration: 0.5 }}
-                    className={`${stat.bg} border ${stat.border} backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between`}>
-                    <stat.icon className={`h-8 w-8 ${stat.color} mb-3`} />
+                  <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    transition={{ delay: 0.15 + i * 0.06, duration: 0.4 }}
+                    className="bg-slate-900 p-5 flex flex-col justify-between">
+                    <div className="flex items-start justify-between mb-3">
+                      <stat.icon className={`h-5 w-5 ${stat.accent}`} />
+                      <span className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-widest text-right leading-tight max-w-[80px]">
+                        {stat.label}
+                      </span>
+                    </div>
                     <div>
-                      <div className={`text-3xl font-display font-black ${stat.color}`}>{stat.value}</div>
-                      <div className="text-slate-400 text-xs mt-1">{stat.label}</div>
-                      <div className="text-slate-500 text-xs mt-0.5">{stat.sub}</div>
+                      <div className={`text-2xl font-display font-black ${stat.accent}`}>{stat.value}</div>
+                      <div className="text-slate-600 text-xs mt-0.5 font-mono">{stat.sub}</div>
                     </div>
                   </motion.div>
                 ))}
@@ -285,21 +298,26 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
             </div>
 
             {/* ── TABS ── */}
-            <div className="flex gap-2 border-b border-slate-800">
-              {(['overview', 'reddit'] as const).map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-3 font-bold text-sm rounded-t-xl transition-all capitalize flex items-center gap-2 ${
-                    activeTab === tab
-                      ? 'bg-slate-800 text-white border border-b-0 border-slate-700'
-                      : 'text-slate-400 hover:text-white'
+            <div className="flex border-b border-slate-800">
+              {[
+                { key: 'overview', label: 'Market Analysis', count: null },
+                { key: 'reddit',   label: 'Community Signals', count: !redditLoading && highReddit > 0 ? highReddit : null },
+              ].map(tab => (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key as any)}
+                  className={`flex items-center gap-2.5 px-6 py-3.5 text-sm font-bold border-b-2 transition-all -mb-px ${
+                    activeTab === tab.key
+                      ? 'border-blue-500 text-white'
+                      : 'border-transparent text-slate-500 hover:text-slate-300'
                   }`}>
-                  {tab === 'reddit' && (
-                    <span className="relative flex h-2 w-2">
-                      {!redditLoading && highReddit > 0 && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />}
-                      <span className={`relative inline-flex rounded-full h-2 w-2 ${!redditLoading && highReddit > 0 ? 'bg-red-400' : 'bg-slate-500'}`} />
+                  {tab.label}
+                  {tab.count !== null && (
+                    <span className="px-1.5 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-mono font-bold rounded">
+                      {tab.count}
                     </span>
                   )}
-                  {tab === 'overview' ? '📊 Market Analysis' : `💬 Community Signals ${highReddit > 0 ? `(${highReddit} urgent)` : ''}`}
+                  {tab.key === 'reddit' && !redditLoading && highReddit === 0 && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+                  )}
                 </button>
               ))}
             </div>
@@ -310,69 +328,87 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                 className="space-y-6">
 
                 {/* Weather triggers */}
-                <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-3xl p-8">
-                  <h3 className="text-xl font-display font-black text-white mb-6 flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-yellow-400" />
-                    Active Weather Triggers
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                  <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                    <h3 className="text-sm font-display font-black text-white flex items-center gap-2.5">
+                      <Zap className="h-4 w-4 text-slate-400" />
+                      Active Weather Triggers
+                    </h3>
                     {triggers.length > 0 && (
-                      <span className="ml-2 px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-mono font-bold rounded-full">
-                        {triggers.length} detected
+                      <span className="px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-mono font-bold rounded uppercase tracking-wider">
+                        {triggers.length} Detected
                       </span>
                     )}
-                  </h3>
-                  {triggers.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {triggers.map((t, i) => (
-                        <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.07 }}
-                          className="flex items-center gap-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-4">
-                          <AlertTriangle className="h-5 w-5 text-yellow-400 shrink-0" />
-                          <span className="text-sm text-slate-200 font-medium">{t}</span>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5">
-                      <CheckCircle className="h-5 w-5 text-emerald-400" />
-                      <p className="text-slate-300">No severe weather triggers right now. Market conditions are stable.</p>
-                    </div>
-                  )}
+                  </div>
+                  <div className="p-6">
+                    {triggers.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {triggers.map((t, i) => (
+                          <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                            transition={{ delay: i * 0.06 }}
+                            className="flex items-center gap-3 bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3.5">
+                            <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
+                            <span className="text-sm text-slate-300 font-medium">{t}</span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 p-4 bg-slate-950/50 rounded-lg border border-slate-800">
+                        <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <p className="text-slate-400 text-sm">No active weather triggers. Market conditions are within normal parameters.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Market intelligence grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-slate-800 rounded-xl overflow-hidden border border-slate-800">
                   {[
-                    { icon: Activity, label: 'Permit Velocity', value: `${profile.permitHeat}/mo`, sub: 'Active construction permits', color: 'indigo' },
-                    { icon: DollarSign, label: 'CPC Level', value: score >= 70 ? 'HIGH' : 'MEDIUM', sub: 'Cost-per-click pressure', color: 'orange' },
-                    { icon: Users, label: 'Competitor Density', value: score >= 80 ? 'High' : score >= 60 ? 'Medium' : 'Low', sub: 'Advertisers in market', color: 'blue' },
+                    { icon: Activity,   label: 'Permit Velocity',    value: `${profile.permitHeat}/mo`,                          sub: 'Active construction permits',  accent: 'text-indigo-400' },
+                    { icon: DollarSign, label: 'CPC Pressure',        value: score >= 70 ? 'ELEVATED' : 'MODERATE',              sub: 'Cost-per-click environment',   accent: 'text-orange-400' },
+                    { icon: Users,      label: 'Competitor Density',  value: score >= 80 ? 'HIGH' : score >= 60 ? 'MEDIUM' : 'LOW', sub: 'Active advertisers in market', accent: 'text-blue-400' },
                   ].map((m, i) => (
-                    <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 + i * 0.08 }}
-                      className={`bg-${m.color}-500/5 border border-${m.color}-500/20 backdrop-blur-xl rounded-2xl p-6`}>
-                      <m.icon className={`h-7 w-7 text-${m.color}-400 mb-4`} />
-                      <div className={`text-2xl font-display font-black text-${m.color}-400`}>{m.value}</div>
-                      <div className="text-white font-bold mt-1">{m.label}</div>
-                      <div className="text-slate-500 text-xs mt-1">{m.sub}</div>
+                    <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 + i * 0.06 }}
+                      className="bg-slate-900 p-6">
+                      <m.icon className={`h-5 w-5 ${m.accent} mb-4`} />
+                      <div className={`text-xl font-display font-black ${m.accent}`}>{m.value}</div>
+                      <div className="text-white font-bold text-sm mt-1">{m.label}</div>
+                      <div className="text-slate-600 text-xs mt-0.5 font-mono">{m.sub}</div>
                     </motion.div>
                   ))}
                 </div>
 
                 {/* Recommended actions */}
-                <div className="bg-gradient-to-br from-blue-950/40 to-indigo-950/40 border border-blue-500/30 rounded-3xl p-8">
-                  <h3 className="text-xl font-display font-black text-white mb-6 flex items-center gap-2">
-                    <Target className="h-5 w-5 text-blue-400" />
-                    Recommended Actions
-                  </h3>
-                  <div className="space-y-3">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                  <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                    <h3 className="text-sm font-display font-black text-white flex items-center gap-2.5">
+                      <Target className="h-4 w-4 text-slate-400" />
+                      Recommended Actions
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">
+                      Based on live data
+                    </span>
+                  </div>
+                  <div className="divide-y divide-slate-800/60">
                     {[
-                      { action: score >= 70 ? 'Deploy Google Ads NOW — peak intent window open' : 'Prepare campaigns — monitor for trigger spike', urgency: score >= 70, icon: Zap },
-                      { action: `Increase bids by ${score >= 80 ? '40–60%' : '20–30%'} for "${service}" keywords`, urgency: score >= 70, icon: TrendingUp },
-                      { action: 'Enable call extensions and location targeting', urgency: false, icon: CheckCircle },
-                      { action: `Target zip codes within 20 miles of ${city} center`, urgency: false, icon: MapPin },
+                      { action: score >= 70 ? 'Deploy Google Ads — peak intent window is open' : 'Prepare campaign assets — monitor for trigger spike', urgent: score >= 70, icon: Zap },
+                      { action: `Increase bids by ${score >= 80 ? '40–60%' : '20–30%'} for "${service}" keywords`, urgent: score >= 70, icon: TrendingUp },
+                      { action: 'Enable call extensions and location targeting in your campaigns', urgent: false, icon: CheckCircle },
+                      { action: `Geo-target zip codes within 20 miles of ${city} city center`, urgent: false, icon: MapPin },
                     ].map((item, i) => (
-                      <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.07 }}
-                        className={`flex items-center gap-4 p-4 rounded-xl border ${item.urgency ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-800/40 border-slate-700'}`}>
-                        <item.icon className={`h-5 w-5 shrink-0 ${item.urgency ? 'text-emerald-400' : 'text-slate-400'}`} />
-                        <span className={`text-sm font-medium ${item.urgency ? 'text-emerald-100' : 'text-slate-300'}`}>{item.action}</span>
-                        {item.urgency && <span className="ml-auto text-[10px] font-mono font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/30">NOW</span>}
+                      <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 + i * 0.06 }}
+                        className={`flex items-center gap-4 px-6 py-4 ${item.urgent ? 'bg-emerald-500/5' : ''}`}>
+                        <item.icon className={`h-4 w-4 shrink-0 ${item.urgent ? 'text-emerald-400' : 'text-slate-600'}`} />
+                        <span className={`text-sm ${item.urgent ? 'text-slate-200' : 'text-slate-400'} flex-1`}>
+                          {item.action}
+                        </span>
+                        {item.urgent && (
+                          <span className="shrink-0 text-[9px] font-mono font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 uppercase tracking-widest">
+                            Deploy Now
+                          </span>
+                        )}
                       </motion.div>
                     ))}
                   </div>
@@ -386,45 +422,50 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
                 className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xl font-display font-black text-white">Community Lead Signals</h3>
-                    <p className="text-slate-400 text-sm mt-1">Real homeowners asking for {industry} help on Reddit</p>
+                    <h3 className="text-lg font-display font-black text-white">Community Lead Signals</h3>
+                    <p className="text-slate-500 text-sm mt-0.5 font-mono">Homeowners publicly requesting {industry} services</p>
                   </div>
-                  {!redditLoading && <span className="text-xs font-mono text-slate-400">{redditPosts.length} signals found</span>}
+                  {!redditLoading && (
+                    <span className="text-xs font-mono text-slate-600 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                      {redditPosts.length} signals indexed
+                    </span>
+                  )}
                 </div>
 
                 {redditLoading ? (
                   <div className="text-center py-16 space-y-3">
-                    <div className="w-10 h-10 border-3 border-t-transparent border-orange-500 rounded-full animate-spin mx-auto" style={{ borderWidth: 3 }} />
-                    <p className="text-slate-400 text-sm">Scanning community boards...</p>
+                    <div className="w-8 h-8 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin mx-auto" />
+                    <p className="text-slate-600 text-xs font-mono uppercase tracking-widest">Indexing community boards</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {redditPosts.map((post, i) => (
-                      <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}
-                        className="group bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-slate-600 rounded-2xl p-6 transition-all">
+                      <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="group bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-5 transition-all">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <UrgencyBadge urgency={post.urgency} />
-                              <span className="text-xs text-slate-500 font-mono">r/{post.subreddit}</span>
-                              <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
+                              <span className="text-[10px] text-slate-600 font-mono">r/{post.subreddit}</span>
+                              <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1">
                                 <Clock className="h-3 w-3" />{timeAgo(post.created_utc)}
                               </span>
                             </div>
-                            <h4 className="text-white font-bold leading-snug group-hover:text-blue-300 transition-colors">
+                            <h4 className="text-sm text-slate-200 font-bold leading-snug group-hover:text-white transition-colors">
                               {post.title}
                             </h4>
                             {post.selftext && (
-                              <p className="text-slate-400 text-sm mt-2 leading-relaxed line-clamp-2">{post.selftext}</p>
+                              <p className="text-slate-500 text-xs mt-2 leading-relaxed line-clamp-2 font-mono">{post.selftext}</p>
                             )}
-                            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
-                              <span className="flex items-center gap-1"><ChevronUp className="h-3 w-3" />{post.score} upvotes</span>
-                              <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" />{post.num_comments} comments</span>
+                            <div className="flex items-center gap-4 mt-2 text-[10px] text-slate-600 font-mono">
+                              <span className="flex items-center gap-1"><ChevronUp className="h-3 w-3" />{post.score}</span>
+                              <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" />{post.num_comments}</span>
                             </div>
                           </div>
                           <a href={post.url} target="_blank" rel="noopener noreferrer"
-                            className="shrink-0 p-2 bg-slate-800 hover:bg-blue-600 rounded-lg transition-all">
-                            <ExternalLink className="h-4 w-4 text-slate-400 hover:text-white" />
+                            className="shrink-0 p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all">
+                            <ExternalLink className="h-3.5 w-3.5 text-slate-500 hover:text-white" />
                           </a>
                         </div>
                       </motion.div>
@@ -436,27 +477,27 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
 
             {/* ── BOTTOM CTA ── */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.5 }}
-              className="bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 rounded-3xl p-8 sm:p-12 shadow-2xl border border-blue-500/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
-              <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+              className="bg-slate-900 border border-slate-700 rounded-2xl p-8 sm:p-10 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Award className="h-6 w-6 text-yellow-300" />
-                    <span className="text-blue-100 font-mono font-bold text-sm uppercase tracking-wider">Ready to Strike?</span>
+                  <div className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-2">
+                    Next Step
                   </div>
-                  <h3 className="text-3xl sm:text-4xl font-display font-black text-white">
-                    Generate Your Campaign Now
+                  <h3 className="text-2xl sm:text-3xl font-display font-black text-white">
+                    Generate Your Campaign
                   </h3>
-                  <p className="text-blue-100 mt-2 text-lg">
-                    Get weather-triggered Google Ads, keywords, and ad copy — ready to deploy in seconds.
+                  <p className="text-slate-400 mt-1.5 text-base">
+                    Weather-triggered Google Ads, keyword lists, and ad copy — ready in seconds.
                   </p>
                 </div>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   onClick={onNavigateToCampaign}
-                  className="shrink-0 px-8 py-5 bg-white text-blue-600 font-display font-black text-lg uppercase tracking-wider rounded-2xl shadow-2xl hover:shadow-white/20 transition-all flex items-center gap-3 group">
-                  <Sparkles className="h-6 w-6" />
-                  Build Campaign
-                  <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+                  className="shrink-0 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-display font-black text-sm uppercase tracking-widest rounded-xl shadow-xl transition-all flex items-center gap-3 group relative overflow-hidden">
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                  <Sparkles className="h-5 w-5 relative z-10" />
+                  <span className="relative z-10">Build Campaign</span>
+                  <ArrowRight className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
                 </motion.button>
               </div>
             </motion.div>
