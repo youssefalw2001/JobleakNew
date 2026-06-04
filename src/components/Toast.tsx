@@ -106,9 +106,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           {toasts.map((toast) => (
             <motion.div
               key={toast.id}
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 100, scale: 0.95 }}
+              initial={{ opacity: 0, x: 60 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className={`${getStyles(toast.type)} backdrop-blur-md border rounded-xl shadow-2xl p-4 pr-12 max-w-md pointer-events-auto relative overflow-hidden`}
             >

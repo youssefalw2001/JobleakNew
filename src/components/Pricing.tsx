@@ -129,8 +129,8 @@ export default function Pricing({ onSelectTier }: PricingProps) {
 
           {/* Trust Indicators */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.6 }}
             className="flex flex-wrap items-center justify-center gap-6 mt-8 text-sm text-slate-400"
           >
@@ -170,8 +170,8 @@ export default function Pricing({ onSelectTier }: PricingProps) {
               {/* Recommended badge */}
               {tier.hot && (
                 <motion.span
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   transition={{ delay: 0.8, duration: 0.5 }}
                   className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-[10px] font-black uppercase tracking-widest rounded-full shadow-xl flex items-center gap-1.5"
                 >
@@ -342,8 +342,8 @@ export default function Pricing({ onSelectTier }: PricingProps) {
 
         {/* Bottom Trust Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 0.6 }}
           className="text-center max-w-2xl mx-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-8 shadow-2xl"
         >

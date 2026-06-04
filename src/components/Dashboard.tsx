@@ -233,9 +233,9 @@ export default function Dashboard() {
       {/* PERSONALIZED CONTROLLER BANNER - UPGRADED WITH ANIMATIONS */}
       {currentUser ? (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
           className="relative bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/20 border border-slate-800 text-white rounded-2xl p-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between overflow-hidden group"
         >
           {/* Animated background effects */}
@@ -245,9 +245,9 @@ export default function Dashboard() {
           
           <div className="space-y-3 relative z-10">
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
               className="flex items-center space-x-3"
             >
               <span className="relative flex h-3 w-3">
@@ -264,9 +264,9 @@ export default function Dashboard() {
             </motion.div>
             
             <motion.h2
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.25, duration: 0.4 }}
               className="text-3xl font-display font-black text-white tracking-tight flex items-center gap-3"
             >
               <Target className="h-8 w-8 text-blue-400" />
@@ -274,9 +274,9 @@ export default function Dashboard() {
             </motion.h2>
             
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35, duration: 0.4 }}
               className="text-sm text-slate-300 font-mono flex flex-wrap gap-x-5 gap-y-2 items-center"
             >
               <span className="flex items-center gap-2 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/30">
@@ -294,9 +294,9 @@ export default function Dashboard() {
           </div>
 
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
             className="mt-6 md:mt-0 relative z-10 flex shrink-0 space-x-3"
           >
             <motion.button
@@ -331,12 +331,13 @@ export default function Dashboard() {
                 Log into a personalized account to bind custom billing invoices, track trade parameters, and record secure client communications isolated strictly to your account.
               </p>
             </div>
-            <a
-              href="#login"
-              className="mt-4 md:mt-0 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-mono font-bold uppercase tracking-wider rounded-lg transition-all select-none border border-blue-500"
+            <button
+              type="button"
+              onClick={() => { window.location.hash = '#login'; }}
+              className="mt-4 md:mt-0 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-mono font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-blue-500 shadow-lg shadow-blue-500/20"
             >
-              Authenticate Profile
-            </a>
+              Sign In / Get Access
+            </button>
           </div>
         </>
       )}
@@ -564,7 +565,7 @@ export default function Dashboard() {
                             <motion.button
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              onClick={() => { window.location.hash = '#campaign'; }}
+                              onClick={() => { window.location.hash = '#campaign'; onRouteChange && (window as any).__jobleak_route?.('#campaign'); }}
                               className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-mono font-black uppercase tracking-widest rounded-lg cursor-pointer"
                             >
                               Build Campaign
@@ -572,7 +573,7 @@ export default function Dashboard() {
                             <motion.button
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              onClick={() => { window.location.hash = '#radar'; }}
+                              onClick={() => { window.location.hash = '#radar'; onRouteChange && (window as any).__jobleak_route?.('#radar'); }}
                               className="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono font-black uppercase tracking-widest rounded-lg cursor-pointer hover:border-slate-600"
                             >
                               View Radar
@@ -620,8 +621,8 @@ export default function Dashboard() {
         
         {/* Card 1: LTD Billings dynamic - UPGRADED */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.5 }}
           whileHover={{ scale: 1.02, y: -5 }}
           className="group relative bento-card p-6 space-y-3 border-r-4 border-r-blue-600 overflow-hidden cursor-pointer"
@@ -668,8 +669,8 @@ export default function Dashboard() {
 
         {/* Card 2: Calls Logged Dynamic - UPGRADED */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
           whileHover={{ scale: 1.02, y: -5 }}
           className="group relative bento-card p-6 space-y-3 border-r-4 border-r-indigo-600 overflow-hidden cursor-pointer"
@@ -714,8 +715,8 @@ export default function Dashboard() {
 
         {/* Card 3: Ad Spend Saved - UPGRADED */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
           whileHover={{ scale: 1.02, y: -5 }}
           className="group relative bento-card p-6 space-y-3 border-r-4 border-r-emerald-600 overflow-hidden cursor-pointer"
@@ -761,8 +762,8 @@ export default function Dashboard() {
 
         {/* Card 4: Active Plan - UPGRADED */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
           whileHover={{ scale: 1.02, y: -5 }}
           className="group relative bento-card p-6 space-y-3 border-r-4 border-r-orange-600 overflow-hidden cursor-pointer"

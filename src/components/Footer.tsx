@@ -28,7 +28,7 @@ export default function Footer({ onRouteChange }: FooterProps) {
           
           {/* Logo Brand Statement - UPGRADED */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
@@ -45,10 +45,10 @@ export default function Footer({ onRouteChange }: FooterProps) {
             {/* Social Links */}
             <div className="flex items-center gap-3 pt-2">
               {[
-                { icon: Twitter, href: '#', color: 'hover:text-blue-400' },
-                { icon: Linkedin, href: '#', color: 'hover:text-blue-500' },
-                { icon: Github, href: '#', color: 'hover:text-slate-300' },
-                { icon: Mail, href: '#', color: 'hover:text-emerald-400' }
+                { icon: Twitter,  href: 'https://twitter.com/jobleak',                    color: 'hover:text-blue-400' },
+                { icon: Linkedin, href: 'https://linkedin.com/company/jobleak',            color: 'hover:text-blue-500' },
+                { icon: Github,   href: 'https://github.com/youssefalw2001/JobleakNew',    color: 'hover:text-slate-300' },
+                { icon: Mail,     href: 'mailto:support@jobleaknew.onrender.com',          color: 'hover:text-emerald-400' },
               ].map((social, idx) => (
                 <motion.a
                   key={idx}
@@ -64,7 +64,7 @@ export default function Footer({ onRouteChange }: FooterProps) {
 
           {/* Quick links - UPGRADED */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1, duration: 0.6 }}
@@ -97,7 +97,7 @@ export default function Footer({ onRouteChange }: FooterProps) {
 
           {/* API Status - UPGRADED */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -128,7 +128,7 @@ export default function Footer({ onRouteChange }: FooterProps) {
 
           {/* System Status - UPGRADED */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3, duration: 0.6 }}
@@ -179,9 +179,9 @@ export default function Footer({ onRouteChange }: FooterProps) {
               <span>for contractors.</span>
             </p>
             <div className="flex items-center gap-6 text-xs text-slate-400">
-              <a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-blue-400 transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-blue-400 transition-colors">Contact Support</a>
+              <a href="https://jobleaknew.onrender.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Privacy Policy</a>
+              <a href="https://jobleaknew.onrender.com/terms" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Terms of Service</a>
+              <a href="mailto:support@jobleaknew.onrender.com" className="hover:text-blue-400 transition-colors">Contact Support</a>
             </div>
           </div>
         </motion.div>

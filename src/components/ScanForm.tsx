@@ -457,8 +457,8 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
         
         {/* Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
@@ -502,7 +502,7 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
         {/* Main Form Card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
           className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
         >
