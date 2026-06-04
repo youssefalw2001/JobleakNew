@@ -103,12 +103,12 @@ export default function App() {
   const handleStartInstantScan = (city: string, industry: string, serviceText: string) => {
     handleScanComplete(city, industry, serviceText);
     window.location.hash = '#radar';
-    setCurrentRoute('#radar');
+    // hashchange listener picks up the route — no manual setCurrentRoute needed
   };
 
   const handleRouteChange = (route: string) => {
-    setCurrentRoute(route);
     window.location.hash = route;
+    // hashchange listener will call setCurrentRoute — no need to double-set
   };
 
   const handlePaymentSuccess = () => {

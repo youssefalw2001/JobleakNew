@@ -115,9 +115,10 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
     const addLine = () => {
       if (i >= script.length) {
         setScanComplete(true);
+        // Step 1: save the scan data first
+        onScanComplete(city, industry, serviceType);
+        // Step 2: wait a full tick for React to flush state, THEN route once
         setTimeout(() => {
-          onScanComplete(city, industry, serviceType);
-          window.location.hash = '#radar';
           onRouteChange('#radar');
         }, 4200);
         return;
@@ -167,8 +168,8 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none opacity-20">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl" />
       </div>
 
       {/* ─── FULL-SCREEN INTELLIGENCE TERMINAL OVERLAY ─── */}
