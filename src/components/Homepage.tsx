@@ -137,7 +137,7 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
                   transition={{ delay: 0.4, duration: 0.6 }}
                   className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 rounded-xl"
                 >
-                  <Zap className="h-5 w-5 text-emerald-400 animate-pulse" />
+                  <Zap className="h-5 w-5 text-emerald-400" />
                   <span className="text-sm font-bold text-emerald-400">
                     Real-time alerts. Zero guesswork. Maximum ROI.
                   </span>
@@ -395,8 +395,8 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
       <section className="py-24 relative overflow-hidden border-b border-slate-800">
         {/* Animated background elements */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/10 to-slate-950" />
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Header */}
@@ -414,7 +414,7 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               transition={{ delay: 0.2, duration: 0.5 }}
               className="inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-indigo-500/10 border border-emerald-500/30 px-5 py-2.5 rounded-full backdrop-blur-md shadow-xl mb-6"
             >
-              <Cpu className="h-5 w-5 text-emerald-400 animate-pulse" />
+              <Cpu className="h-5 w-5 text-emerald-400" />
               <span className="text-sm font-mono font-black tracking-widest text-emerald-400 uppercase">
                 Deep Market Audit™ Engine
               </span>
@@ -608,7 +608,7 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-mono font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              <Sparkles className="h-3 w-3 mr-1 text-blue-400 animate-spin" /> Corporate Strategy Dashboard
+              <Sparkles className="h-3 w-3 mr-1 text-blue-400" /> Corporate Strategy Dashboard
             </span>
             <h2 className="text-3xl sm:text-4xl font-display font-semibold tracking-tight text-white">
               Why JobLeak Wins & How We Generate Extreme Value
@@ -747,7 +747,7 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
 
                 <div className="border-t border-slate-800 pt-3.5 flex flex-col sm:flex-row sm:items-center justify-between text-sm gap-2">
                   <div className="flex items-center space-x-1.5 text-slate-300">
-                    <Sparkles className="h-4 w-4 text-emerald-400 animate-pulse" />
+                    <Sparkles className="h-4 w-4 text-emerald-400" />
                     <span>Calculated Return Margin: <b className="text-white font-mono">{( ((calcJobValue * calcMonthlyJobs * 12) + (calcAdBudget * 12)) / 2388 * 100 ).toFixed(0)}% ROI</b></span>
                   </div>
                   
@@ -1024,6 +1024,212 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
         </div>
       </section>
 
+      {/* COMPARISON TABLE — JobLeak vs Alternatives */}
+      <section className="py-24 border-t border-slate-800 relative z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/30 to-slate-950 pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center max-w-3xl mx-auto mb-14"
+          >
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-5">
+              Competitive Analysis
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-display font-black tracking-tight text-white leading-tight mb-4">
+              Why Contractors Choose{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+                JobLeak
+              </span>
+            </h2>
+            <p className="text-slate-400 text-base leading-relaxed">
+              Every alternative costs you more, delivers less, and puts you in a race against four other contractors for the same homeowner.
+            </p>
+          </motion.div>
+
+          {/* Table */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.15, duration: 0.5 }}
+            className="overflow-x-auto rounded-2xl border border-slate-800"
+          >
+            <table className="w-full border-collapse text-sm">
+              {/* Column headers */}
+              <thead>
+                <tr className="border-b border-slate-800">
+                  <th className="text-left px-6 py-5 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest w-52">
+                    Feature
+                  </th>
+                  {/* JobLeak — highlighted */}
+                  <th className="px-6 py-5 bg-gradient-to-b from-blue-600/20 to-indigo-600/10 border-x border-blue-500/30 text-center">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="text-white font-display font-black text-base tracking-tight">JobLeak</span>
+                      <span className="px-2 py-0.5 bg-blue-500 text-white text-[9px] font-mono font-black rounded uppercase tracking-widest">
+                        Recommended
+                      </span>
+                    </div>
+                  </th>
+                  <th className="px-6 py-5 text-center">
+                    <span className="text-slate-400 font-bold text-sm">HomeAdvisor / Angi</span>
+                  </th>
+                  <th className="px-6 py-5 text-center">
+                    <span className="text-slate-400 font-bold text-sm">Cold Calling</span>
+                  </th>
+                  <th className="px-6 py-5 text-center">
+                    <span className="text-slate-400 font-bold text-sm">DIY Google Ads</span>
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-slate-800/60">
+                {[
+                  {
+                    feature: 'Monthly Cost',
+                    jobleak: '$99–$299 flat',
+                    ha: '$120–$180 per lead',
+                    cold: '$2K–$5K/mo salary',
+                    diy: '$500–$3K+ ad spend',
+                    jobleakHighlight: true,
+                  },
+                  {
+                    feature: 'Lead Exclusivity',
+                    jobleak: '100% exclusive to you',
+                    ha: 'Sold to 4–5 contractors',
+                    cold: 'Manual outreach only',
+                    diy: 'Shared auction — anyone',
+                    jobleakHighlight: true,
+                  },
+                  {
+                    feature: 'Lead Timing',
+                    jobleak: '18–72h before demand peaks',
+                    ha: '24–48h after homeowner calls',
+                    cold: 'Interruption — no intent',
+                    diy: 'Reactive — after search',
+                    jobleakHighlight: true,
+                  },
+                  {
+                    feature: 'Weather Intelligence',
+                    jobleak: 'Real-time NWS + Open-Meteo',
+                    ha: 'None',
+                    cold: 'None',
+                    diy: 'None',
+                    jobleakHighlight: true,
+                  },
+                  {
+                    feature: 'Campaign Generation',
+                    jobleak: 'Full Google Ads + LSA + Email',
+                    ha: 'Not included',
+                    cold: 'Not included',
+                    diy: 'Manual — hours of work',
+                    jobleakHighlight: true,
+                  },
+                  {
+                    feature: 'Competitor Intelligence',
+                    jobleak: 'Local ad spend estimates',
+                    ha: 'None',
+                    cold: 'None',
+                    diy: 'Manual research only',
+                    jobleakHighlight: false,
+                  },
+                  {
+                    feature: 'Reddit / Community Signals',
+                    jobleak: 'Live homeowner intent posts',
+                    ha: 'None',
+                    cold: 'None',
+                    diy: 'None',
+                    jobleakHighlight: true,
+                  },
+                  {
+                    feature: 'ROI Tracking',
+                    jobleak: 'Built-in ROI calculator',
+                    ha: 'None',
+                    cold: 'Spreadsheet manual',
+                    diy: 'Google Ads only',
+                    jobleakHighlight: false,
+                  },
+                  {
+                    feature: 'Setup Time',
+                    jobleak: 'Under 5 minutes',
+                    ha: '1–3 days approval',
+                    cold: '2–4 weeks hiring',
+                    diy: 'Days of learning curve',
+                    jobleakHighlight: true,
+                  },
+                  {
+                    feature: 'Breakeven (1 job closed)',
+                    jobleak: '1 job = months covered',
+                    ha: '8–10 leads to break even',
+                    cold: '15–20 calls to close 1',
+                    diy: '$400–$800 spend per lead',
+                    jobleakHighlight: true,
+                  },
+                ].map((row, i) => (
+                  <tr key={i} className="hover:bg-slate-900/40 transition-colors group">
+                    {/* Feature label */}
+                    <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                      {row.feature}
+                    </td>
+
+                    {/* JobLeak — highlighted column */}
+                    <td className="px-6 py-4 bg-blue-600/5 border-x border-blue-500/20 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                          <Check className="h-2.5 w-2.5 text-emerald-400" />
+                        </span>
+                        <span className={`text-xs font-bold ${row.jobleakHighlight ? 'text-white' : 'text-slate-300'}`}>
+                          {row.jobleak}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* HomeAdvisor */}
+                    <td className="px-6 py-4 text-center text-xs text-slate-500">{row.ha}</td>
+
+                    {/* Cold Calling */}
+                    <td className="px-6 py-4 text-center text-xs text-slate-500">{row.cold}</td>
+
+                    {/* DIY Ads */}
+                    <td className="px-6 py-4 text-center text-xs text-slate-500">{row.diy}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </motion.div>
+
+          {/* Bottom CTA under table */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-slate-900 border border-slate-800 rounded-2xl"
+          >
+            <div>
+              <p className="text-white font-display font-black text-lg">Stop paying per lead. Start owning your market.</p>
+              <p className="text-slate-500 text-sm font-mono mt-0.5">
+                Flat monthly rate. No per-lead fees. No contracts. Cancel anytime.
+              </p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => { onRouteChange('#pricing'); window.location.hash = '#pricing'; }}
+              className="shrink-0 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-display font-black text-sm uppercase tracking-widest rounded-xl transition-all flex items-center gap-2.5 group relative overflow-hidden shadow-lg shadow-blue-500/20 cursor-pointer"
+            >
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              <span className="relative z-10">View Pricing</span>
+              <ArrowRight className="h-4 w-4 relative z-10 group-hover:translate-x-0.5 transition-transform" />
+            </motion.button>
+          </motion.div>
+        </div>
+      </section>
+
       {/* 6. COUPLING CHANNELS AND COURIER CAPABILITIES (SIGNAL SOURCES) */}
       <section className="py-20 border-b border-slate-700/80 relative z-10">
         <div className="absolute inset-x-0 bottom-0 top-0 opacity-[0.25] pointer-events-none saas-grid-bg" />
@@ -1078,7 +1284,7 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
             {/* Right side representation visualizer card */}
             <div className="lg:col-span-7 bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-700 shadow-sm relative">
               <h5 className="font-mono text-[10px] text-blue-600 uppercase tracking-widest font-bold mb-6 flex items-center space-x-1.5">
-                <Activity className="h-4 w-4 animate-pulse" />
+                <Activity className="h-4 w-4" />
                 <span>Interactive Signal Flow Diagnostic</span>
               </h5>
               
@@ -1533,7 +1739,7 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               className="px-8 py-4 bg-slate-950 text-white hover:bg-slate-900 font-display font-bold uppercase tracking-widest rounded-xl shadow-2xl transition-all inline-flex items-center space-x-2 text-sm border border-transparent hover:border-slate-800 cursor-pointer"
             >
               <span>Build Free Regional Scanner Report</span>
-              <ArrowRight className="h-4 w-4 text-blue-400 font-bold animate-pulse" />
+              <ArrowRight className="h-4 w-4 text-blue-400 font-bold" />
             </motion.button>
           </div>
         </div>

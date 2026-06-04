@@ -794,7 +794,7 @@ export default function Dashboard() {
           {currentUser ? (
             (currentUser.loggedCalls ?? []).length === 0 ? (
               <div className="text-center py-12 space-y-3 bg-slate-900/50/50 rounded-xl border border-dashed border-slate-700">
-                <Smartphone className="h-10 w-10 text-slate-350 mx-auto animate-pulse" />
+                <Smartphone className="h-10 w-10 text-slate-350 mx-auto" />
                 <h4 className="text-sm font-bold font-mono text-slate-650">No Captured Communications Available</h4>
                 <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
                   Click the <strong>"Log Manual Call"</strong> tab above to record conversation details and view instant math computations.

@@ -329,8 +329,8 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       {/* BG blobs */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10 space-y-10">
@@ -370,7 +370,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
         {loading ? (
           /* ── LOADING STATE ── */
           <div className="text-center py-32 space-y-4">
-            <div className="w-20 h-20 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="w-20 h-20 border-4 border-slate-700 border-t-slate-400 rounded-full animate-spin mx-auto" />
             <p className="text-white font-bold text-xl">Analyzing {city} market...</p>
             <p className="text-slate-400 font-mono text-sm">Pulling weather data, scoring intent, mapping competitors</p>
           </div>
