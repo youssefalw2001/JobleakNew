@@ -19,6 +19,9 @@ import {
   Radio,
   Database,
   Star,
+  Activity,
+  Target,
+  Cpu,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { MarketProfiles, calculateSearchIntentScore, getMarketProfile } from '../types';
@@ -56,15 +59,65 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-7 space-y-7"
             >
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-full">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500" />
-                </span>
-                <span className="text-sm font-mono font-bold tracking-widest text-blue-400 uppercase">
-                  Weather-Triggered Lead Intelligence
-                </span>
+              {/* ── 3-Pillar intelligence badge strip ── */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  {
+                    icon: Activity,
+                    label: 'Demand Forecasting',
+                    sub: '18–72h early signal',
+                    color: 'text-blue-400',
+                    border: 'border-blue-500/25',
+                    bg: 'bg-blue-500/8',
+                    dot: 'bg-blue-500',
+                  },
+                  {
+                    icon: Target,
+                    label: 'Competitor Intelligence',
+                    sub: 'Ad spend + CPC gaps',
+                    color: 'text-indigo-400',
+                    border: 'border-indigo-500/25',
+                    bg: 'bg-indigo-500/8',
+                    dot: 'bg-indigo-500',
+                  },
+                  {
+                    icon: Cpu,
+                    label: 'Instant Campaign Deploy',
+                    sub: 'Google Ads + LSA ready',
+                    color: 'text-emerald-400',
+                    border: 'border-emerald-500/25',
+                    bg: 'bg-emerald-500/8',
+                    dot: 'bg-emerald-400',
+                    live: true,
+                  },
+                ].map((pill, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.05 + i * 0.08, duration: 0.4 }}
+                    className={`flex items-center gap-2.5 ${pill.bg} border ${pill.border} px-3.5 py-2 rounded-xl`}
+                  >
+                    {/* Live dot on last pill */}
+                    {pill.live ? (
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                      </span>
+                    ) : (
+                      <span className={`w-2 h-2 rounded-full ${pill.dot} shrink-0`} />
+                    )}
+                    <pill.icon className={`h-3.5 w-3.5 ${pill.color} shrink-0`} />
+                    <div className="leading-none">
+                      <span className={`text-[11px] font-mono font-black ${pill.color} uppercase tracking-wider block`}>
+                        {pill.label}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500 mt-0.5 block">
+                        {pill.sub}
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
 
               {/* Headline */}
@@ -76,9 +129,11 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
                   </span>
                 </h1>
                 <p className="text-lg sm:text-xl text-slate-300 leading-relaxed max-w-2xl">
-                  Stop chasing cold leads. JobLeak detects weather events, permit spikes, and search intent surges — delivering{' '}
-                  <span className="text-emerald-400 font-bold">high-urgency contractor jobs</span>{' '}
-                  18–72 hours before your competitors know they exist.
+                  JobLeak gives contractors a full intelligence edge —{' '}
+                  <span className="text-blue-400 font-bold">demand forecasting</span>,{' '}
+                  <span className="text-indigo-400 font-bold">competitor spend tracking</span>, and{' '}
+                  <span className="text-emerald-400 font-bold">instant campaign deployment</span>{' '}
+                  — so you reach homeowners 18–72 hours before anyone else reacts.
                 </p>
               </div>
 
@@ -107,10 +162,10 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               {/* Signal bullets */}
               <div className="grid grid-cols-2 gap-3 border-t border-slate-800 pt-6 max-w-xl">
                 {[
-                  'Live geolocational parses',
-                  'NWS severe incident radar',
-                  'Algorithmic intent scoring',
-                  'Ready-to-launch campaigns',
+                  'Weather + permit demand spikes',
+                  'Competitor budget exhaustion',
+                  'Real-time search intent scoring',
+                  'Ready-to-deploy campaigns',
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
                     <span className="w-1.5 h-1.5 rounded bg-blue-500 shrink-0" />
@@ -242,17 +297,17 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               {[
                 {
                   step: '01',
-                  icon: CloudSun,
-                  title: 'Weather triggers fire',
-                  desc: 'Our engine monitors NWS alerts, temperature extremes, wind events, and precipitation in your city 24/7.',
+                  icon: Activity,
+                  title: 'Intelligence fires first',
+                  desc: 'Weather events, permit velocity spikes, seasonal demand curves, and Reddit community signals all feed the engine — 24/7.',
                   accent: 'text-blue-400',
                   bg: 'bg-blue-500/5',
                 },
                 {
                   step: '02',
-                  icon: Search,
-                  title: 'Demand gets scored',
-                  desc: 'We calculate search intent spikes, competitor budget exhaustion windows, and CPC opportunity scores in real time.',
+                  icon: Target,
+                  title: 'Market gets scored',
+                  desc: 'Competitor ad budgets, CPC exhaustion windows, search intent density, and local demand pressure are calculated in real time.',
                   accent: 'text-indigo-400',
                   bg: 'bg-indigo-500/5',
                 },
@@ -260,7 +315,7 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
                   step: '03',
                   icon: Zap,
                   title: 'You deploy and win',
-                  desc: 'Download your Google Ads campaign, LSA checklist, and email templates — live before competitors react.',
+                  desc: 'Download your Google Ads campaign, LSA checklist, and email templates — live and in market before competitors even notice the shift.',
                   accent: 'text-emerald-400',
                   bg: 'bg-emerald-500/5',
                 },

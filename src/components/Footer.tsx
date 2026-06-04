@@ -6,6 +6,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Shield, Sparkles, Database, Twitter, Linkedin, Github, Mail, Heart } from 'lucide-react';
+import JobLeakLogo from './JobLeakLogo';
 
 interface FooterProps {
   onRouteChange: (route: string) => void;
@@ -33,17 +34,12 @@ export default function Footer({ onRouteChange }: FooterProps) {
             transition={{ duration: 0.6 }}
             className="space-y-4 md:col-span-1"
           >
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-display font-bold text-lg shadow-lg">
-                J
-              </div>
-              <span className="text-xl font-display font-bold text-white tracking-tight">
-                Job<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-black">Leak</span>
-              </span>
-            </div>
+            <JobLeakLogo variant="full" size="md" />
             
             <p className="text-slate-300 leading-relaxed text-sm">
-              Weather-triggered contractor intelligence. Get <span className="text-blue-400 font-bold">18-72 hours ahead</span> of your competition with AI-powered lead forecasting.
+              Demand forecasting, competitor intelligence, and instant campaign deployment — giving contractors a{' '}
+              <span className="text-blue-400 font-bold">18–72 hour edge</span>{' '}
+              over every competitor in their market.
             </p>
 
             {/* Social Links */}

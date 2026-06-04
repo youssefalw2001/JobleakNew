@@ -27,6 +27,7 @@ import {
   DollarSign,
   Zap,
 } from 'lucide-react';
+import JobLeakLogo from './JobLeakLogo';
 import { StatesList } from '../types';
 import CheckoutModal from './CheckoutModal';
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from '../firebase';
@@ -375,13 +376,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         <div className="relative z-10 flex flex-col h-full p-10 xl:p-14">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-14">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="text-white font-display font-black text-lg tracking-tight">JobLeak</span>
-              <span className="block text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest -mt-0.5">Intelligence Platform</span>
-            </div>
+            <JobLeakLogo variant="full" size="md" />
           </div>
 
           {/* Headline */}
@@ -393,7 +388,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               </span>
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              Real-time weather intelligence that puts your ads in front of homeowners the moment demand spikes — before anyone else can react.
+              Demand forecasting, competitor spend tracking, and instant campaign deployment — putting your ads in front of homeowners before anyone else can react.
             </p>
           </div>
 
@@ -450,10 +445,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center gap-3 mb-8 justify-center">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-              <Zap className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-white font-display font-black text-lg tracking-tight">JobLeak</span>
+            <JobLeakLogo variant="inline" size="sm" />
           </div>
 
           {/* Heading */}
