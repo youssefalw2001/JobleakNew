@@ -59,6 +59,51 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-7 space-y-7"
             >
+              {/* ── Animated brand name ── */}
+              <div className="flex items-baseline gap-[2px] overflow-hidden">
+                {/* "Job" — white letters */}
+                {'Job'.split('').map((letter, i) => (
+                  <motion.span
+                    key={`job-${i}`}
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: 0.05 + i * 0.06,
+                      duration: 0.4,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="text-[13px] font-mono font-black text-slate-300 uppercase tracking-[0.35em]"
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+                {/* "Leak" — gradient letters */}
+                {'Leak'.split('').map((letter, i) => (
+                  <motion.span
+                    key={`leak-${i}`}
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: 0.23 + i * 0.06,
+                      duration: 0.4,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="text-[13px] font-mono font-black uppercase tracking-[0.35em] text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400"
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+                {/* Trailing cursor blink — fades out after intro */}
+                <motion.span
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 0 }}
+                  transition={{ delay: 1.4, duration: 0.3 }}
+                  className="text-[13px] font-mono font-black text-blue-400 ml-0.5"
+                >
+                  _
+                </motion.span>
+              </div>
+
               {/* ── 3-Pillar intelligence badge strip ── */}
               <div className="flex flex-wrap gap-2">
                 {[
