@@ -233,7 +233,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
   const isGrowth  = ['Growth', 'Pro'].includes(userPlan);
   const isPro     = userPlan === 'Pro';
 
-  const city     = scannedData?.city     || 'Austin';
+  const city     = (scannedData?.city     || 'Austin').split(',')[0].trim();
   const industry = scannedData?.industry || 'HVAC';
   const service  = scannedData?.serviceText || 'Emergency Repair';
 
@@ -344,11 +344,13 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
   }
 
   const urgency      = getUrgencyConfig(score);
-  const profile      = getMarketProfile(city);
+  // Defensive: strip state suffix (e.g. "Austin, TX" → "Austin")
+  const cityName     = city.split(',')[0].trim();
+  const profile      = getMarketProfile(cityName);
   const triggers     = weather?.triggers || [];
   const highReddit   = redditPosts.filter(p => p.urgency === 'HIGH').length;
-  const intel        = getCityIntel(city, industry, score);
-  const compSnapshot = getCompetitorSnapshot(city, industry);
+  const intel        = getCityIntel(cityName, industry, score);
+  const compSnapshot = getCompetitorSnapshot(cityName, industry);
   const seasonal     = getSeasonalDemand(industry);
   const currentMonth = new Date().getMonth();
 

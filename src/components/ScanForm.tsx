@@ -81,11 +81,21 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
   const [showPaywall, setShowPaywall]       = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  // Check gate on mount
-  const session           = getActiveSession();
-  const isLoggedIn        = !!session;
-  const freeScanUsed      = localStorage.getItem(FREE_SCAN_KEY) === '1';
-  const isPaidUser        = isLoggedIn && ['Starter','Growth','Pro'].includes(session?.subscriptionPlan ?? '');
+  // Reactive auth state — re-evaluates on every render so it's always current
+  const [sessionState, setSessionState] = useState(() => getActiveSession());
+
+  useEffect(() => {
+    // Re-check session whenever the component mounts or regains focus
+    setSessionState(getActiveSession());
+    const onFocus = () => setSessionState(getActiveSession());
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+
+  const isLoggedIn   = !!sessionState;
+  const freeScanUsed = localStorage.getItem(FREE_SCAN_KEY) === '1';
+  const isPaidUser   = isLoggedIn &&
+    ['Starter', 'Growth', 'Pro'].includes(sessionState?.subscriptionPlan ?? '');
 
   // Auto-update cities when state changes
   useEffect(() => {
@@ -149,15 +159,21 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
         // Save scan data immediately
         onScanComplete(city, industry, serviceType);
 
-        // If not logged in — show login prompt before routing to Radar
+        // Determine where to send the user
         if (!isLoggedIn) {
+          // Not logged in — show login prompt, let them choose
           setShowLoginPrompt(true);
           return;
         }
 
-        // Logged-in paid users route straight to Radar
+        // Logged in + paid — route straight to Radar after estimator display
         setTimeout(() => {
-          onRouteChange('#radar');
+          try {
+            onRouteChange('#radar');
+          } catch (e) {
+            // Fallback — direct hash change always works
+            window.location.hash = '#radar';
+          }
         }, 4200);
         return;
       }
