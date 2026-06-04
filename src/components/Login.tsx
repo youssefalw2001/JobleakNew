@@ -49,6 +49,13 @@ interface LoginProps {
 type AuthMode = 'signin' | 'signup';
 type ChannelType = 'email' | 'phone';
 
+// ── Whop checkout URLs ────────────────────────────────────────────────────────
+const WHOP_URLS: Record<string, string> = {
+  Starter: 'https://whop.com/checkout/plan_txHzVnJkSgWey',
+  Growth:  'https://whop.com/checkout/plan_NY1zTd8pFbhch',
+  Pro:     'https://whop.com/checkout/plan_VUIIv64AQrBer',
+};
+
 // ── Google SVG icon (4-path official) ────────────────────────────────────────
 function GoogleIcon() {
   return (
@@ -221,17 +228,19 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     }
   };
 
-  // ── Checkout callback ────────────────────────────────────────────────────────
+  // ── Checkout callback — opens Whop then creates profile ─────────────────────
   const handleCheckoutSuccess = async () => {
     try {
       if (pendingFirebaseUid) {
         const freshProfile = await createFirestoreProfile(pendingFirebaseUid, pendingUserEmail, pendingUserPhone);
         saveActiveSession(freshProfile);
+        // Open Whop checkout in new tab for the selected plan
+        window.open(WHOP_URLS[subscriptionPlan], '_blank', 'noopener,noreferrer');
         setSuccess(true);
         setTimeout(() => onLoginSuccess(freshProfile), 1600);
       }
     } catch (e: any) {
-      setErrorText('Checkout success, but profile creation failed: ' + e.message);
+      setErrorText('Profile creation failed: ' + e.message);
     }
     setShowCheckoutModal(false);
   };
@@ -734,6 +743,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                           </button>
                         ))}
                       </div>
+                      <p className="text-[10px] font-mono text-slate-600 mt-2">
+                        You'll be redirected to Whop checkout after account creation.
+                      </p>
                     </div>
                   </div>
                 </motion.div>

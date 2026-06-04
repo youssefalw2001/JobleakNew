@@ -5,7 +5,14 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { Check, Star, Shield, HelpCircle, Zap, TrendingUp, Award } from 'lucide-react';
+import { Check, Star, Shield, HelpCircle, Zap, TrendingUp, Award, ExternalLink } from 'lucide-react';
+
+// ── Whop checkout URLs ────────────────────────────────────────────────────────
+const WHOP_URLS: Record<string, string> = {
+  Starter: 'https://whop.com/checkout/plan_txHzVnJkSgWey',
+  Growth:  'https://whop.com/checkout/plan_NY1zTd8pFbhch',
+  Pro:     'https://whop.com/checkout/plan_VUIIv64AQrBer',
+};
 
 interface PricingProps {
   onSelectTier: (tierName: string) => void;
@@ -231,20 +238,25 @@ export default function Pricing({ onSelectTier }: PricingProps) {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   id={`pricing-select-${tier.name.toLowerCase()}`}
-                  onClick={() => onSelectTier(tier.name)}
+                  onClick={() => {
+                    window.open(WHOP_URLS[tier.name], '_blank', 'noopener,noreferrer');
+                    onSelectTier(tier.name);
+                  }}
                   className={`w-full py-4 font-display font-black text-sm uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer relative overflow-hidden group/btn ${
                     tier.hot
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/50'
                       : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
                   }`}
                 >
-                  {/* Shimmer effect */}
                   <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {tier.cta}
-                    <TrendingUp className="h-4 w-4" />
+                    <ExternalLink className="h-4 w-4" />
                   </span>
                 </motion.button>
+                <p className="text-center text-[10px] font-mono text-slate-600 mt-2.5">
+                  Secure checkout via Whop · Cancel anytime
+                </p>
               </div>
             </motion.div>
           ))}

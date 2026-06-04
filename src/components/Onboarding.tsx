@@ -12,11 +12,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   MapPin, Zap, BarChart3, CheckCircle, ArrowRight,
   CloudSun, Target, Cpu, Activity, ChevronRight,
-  Building2, Users, DollarSign, Clock,
+  Building2, Users, DollarSign, Clock, ExternalLink,
 } from 'lucide-react';
 import { StatesList, calculateSearchIntentScore } from '../types';
 import { getActiveSession, saveActiveSession, AuthUser } from '../authService';
 import JobLeakLogo from './JobLeakLogo';
+
+// ── Whop checkout URLs ────────────────────────────────────────────────────────
+const WHOP_URLS: Record<string, string> = {
+  Starter: 'https://whop.com/checkout/plan_txHzVnJkSgWey',
+  Growth:  'https://whop.com/checkout/plan_NY1zTd8pFbhch',
+  Pro:     'https://whop.com/checkout/plan_VUIIv64AQrBer',
+};
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -400,66 +407,116 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                     <CheckCircle className="h-8 w-8 text-emerald-400" />
                   </motion.div>
                   <h1 className="text-3xl sm:text-4xl font-display font-black text-white tracking-tight">
-                    Intelligence Active
+                    Choose Your Plan
                   </h1>
                   <p className="text-slate-400 font-mono text-sm max-w-md mx-auto leading-relaxed">
-                    Your market is set. JobLeak is now monitoring{' '}
-                    <span className="text-white font-bold">{selectedCity} {selectedTrade}</span>{' '}
-                    around the clock. Every opportunity surfaces on your dashboard automatically.
+                    Your market is set to{' '}
+                    <span className="text-white font-bold">{selectedCity} {selectedTrade}</span>.
+                    Pick the plan that fits — you can upgrade anytime.
                   </p>
                 </div>
 
-                {/* What they get */}
+                {/* Plan cards */}
                 <div className="space-y-3">
-                  {[
+                  {([
                     {
-                      icon: Activity,
-                      title: 'Live Intelligence Feed',
-                      desc: 'Every weather trigger, permit spike, FEMA alert, and competitor gap — ranked by urgency and updated daily.',
-                      color: 'text-blue-400',
-                      bg: 'bg-blue-500/8',
-                      border: 'border-blue-500/20',
+                      name:    'Starter',
+                      price:   '$99',
+                      color:   'text-slate-300',
+                      border:  'border-slate-700',
+                      bg:      'bg-slate-900',
+                      hborder: 'hover:border-slate-500',
+                      features: [
+                        'Weather triggers + daily intelligence feed',
+                        'Google Ads campaign generator',
+                        'Opportunity score for your city',
+                        'LSA checklist + email templates',
+                      ],
                     },
                     {
-                      icon: Target,
-                      title: 'Competitor Budget Tracker',
-                      desc: `${competitorCt} local ${selectedTrade} businesses detected. We track when their ad budgets exhaust so you know exactly when to outbid.`,
-                      color: 'text-indigo-400',
-                      bg: 'bg-indigo-500/8',
-                      border: 'border-indigo-500/20',
+                      name:    'Growth',
+                      price:   '$199',
+                      color:   'text-blue-300',
+                      border:  'border-blue-500',
+                      bg:      'bg-blue-600/8',
+                      hborder: 'hover:border-blue-400',
+                      hot:     true,
+                      features: [
+                        'Everything in Starter',
+                        'Real competitor intel (Google Maps data)',
+                        'US Census permit feed',
+                        'FEMA disaster declarations',
+                        'Competitor CPC exhaustion windows',
+                      ],
                     },
                     {
-                      icon: Cpu,
-                      title: 'Instant Campaign Generator',
-                      desc: 'One click — full Google Ads campaign, LSA checklist, and email templates ready to deploy in under 5 minutes.',
-                      color: 'text-emerald-400',
-                      bg: 'bg-emerald-500/8',
-                      border: 'border-emerald-500/20',
+                      name:    'Pro',
+                      price:   '$299',
+                      color:   'text-emerald-300',
+                      border:  'border-emerald-600/50',
+                      bg:      'bg-emerald-500/5',
+                      hborder: 'hover:border-emerald-500',
+                      features: [
+                        'Everything in Growth',
+                        'Multi-city monitoring (up to 5)',
+                        'Yelp competitor weakness analysis',
+                        'Priority FEMA + disaster alerts',
+                        'Advanced search trend signals',
+                      ],
                     },
-                    {
-                      icon: Building2,
-                      title: 'Permit + Disaster Feeds',
-                      desc: 'US Census building permits and FEMA declarations for your state — the highest-ticket opportunities in contracting.',
-                      color: 'text-orange-400',
-                      bg: 'bg-orange-500/8',
-                      border: 'border-orange-500/20',
-                    },
-                  ].map((item, i) => (
+                  ] as const).map((plan, i) => (
                     <motion.div
-                      key={i}
+                      key={plan.name}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.1 + i * 0.08 }}
-                      className={`flex items-start gap-4 p-4 ${item.bg} border ${item.border} rounded-xl`}
+                      className={`relative ${plan.bg} border ${plan.border} ${plan.hborder} rounded-xl p-5 transition-all`}
                     >
-                      <div className={`w-8 h-8 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-center shrink-0`}>
-                        <item.icon className={`h-4 w-4 ${item.color}`} />
+                      {plan.hot && (
+                        <span className="absolute -top-2.5 left-4 px-2.5 py-0.5 bg-blue-500 text-white text-[9px] font-mono font-black uppercase tracking-widest rounded-full">
+                          Most Popular
+                        </span>
+                      )}
+
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                          <span className={`text-base font-display font-black ${plan.color}`}>{plan.name}</span>
+                          <span className="text-slate-600 font-mono text-xs ml-2">{plan.price}/mo</span>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => window.open(WHOP_URLS[plan.name], '_blank', 'noopener,noreferrer')}
+                          className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-mono font-black uppercase tracking-widest transition-all cursor-pointer ${
+                            plan.hot
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+                              : 'bg-slate-800 border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white'
+                          }`}
+                        >
+                          Get Started
+                          <ExternalLink className="h-3 w-3" />
+                        </motion.button>
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-white mb-0.5">{item.title}</div>
-                        <div className="text-xs font-mono text-slate-400 leading-relaxed">{item.desc}</div>
-                      </div>
+
+                      <ul className="space-y-1.5">
+                        {plan.features.map((f, fi) => (
+                          <li key={fi} className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                            <CheckCircle className={`h-3 w-3 shrink-0 ${plan.hot ? 'text-blue-400' : 'text-slate-600'}`} />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
                     </motion.div>
+                  ))}
+                </div>
+
+                {/* Trust strip */}
+                <div className="flex items-center justify-center gap-6 pt-2">
+                  {['Secure checkout via Whop', 'Cancel anytime', 'Instant access'].map((t, i) => (
+                    <span key={i} className="text-[10px] font-mono text-slate-600 flex items-center gap-1.5">
+                      <CheckCircle className="h-3 w-3 text-slate-700" />
+                      {t}
+                    </span>
                   ))}
                 </div>
               </motion.div>
@@ -493,7 +550,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         >
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           <span className="relative z-10">
-            {step === 0 ? 'Preview My Market' : step === 1 ? 'Looks Good — Continue' : 'Open My Dashboard'}
+            {step === 0 ? 'Preview My Market' : step === 1 ? 'Looks Good — Continue' : 'Go to Dashboard'}
           </span>
           <ArrowRight className="h-4 w-4 relative z-10 group-hover:translate-x-0.5 transition-transform" />
         </motion.button>
