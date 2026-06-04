@@ -59,49 +59,63 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-7 space-y-7"
             >
-              {/* ── Animated brand name ── */}
-              <div className="flex items-baseline gap-[2px] overflow-hidden">
-                {/* "Job" — white letters */}
-                {'Job'.split('').map((letter, i) => (
-                  <motion.span
+              {/* ── Animated brand name — letter by letter ── */}
+              <div className="flex items-end gap-1 overflow-visible">
+                {/* "JOB" — white */}
+                {'JOB'.split('').map((letter, i) => (
+                  <motion.div
                     key={`job-${i}`}
-                    initial={{ opacity: 0, y: 18 }}
+                    initial={{ opacity: 0, y: 32 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
-                      delay: 0.05 + i * 0.06,
-                      duration: 0.4,
+                      delay: 0.08 + i * 0.08,
+                      duration: 0.5,
                       ease: [0.16, 1, 0.3, 1],
                     }}
-                    className="text-[13px] font-mono font-black text-slate-300 uppercase tracking-[0.35em]"
+                    className="text-4xl sm:text-5xl font-display font-black text-white uppercase leading-none tracking-tight"
+                    style={{ display: 'inline-block' }}
                   >
                     {letter}
-                  </motion.span>
+                  </motion.div>
                 ))}
-                {/* "Leak" — gradient letters */}
-                {'Leak'.split('').map((letter, i) => (
-                  <motion.span
+
+                {/* Thin divider between words */}
+                <motion.div
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ delay: 0.34, duration: 0.25 }}
+                  className="w-px h-8 bg-slate-700 mx-1 self-center"
+                  style={{ display: 'inline-block' }}
+                />
+
+                {/* "LEAK" — gradient */}
+                {'LEAK'.split('').map((letter, i) => (
+                  <motion.div
                     key={`leak-${i}`}
-                    initial={{ opacity: 0, y: 18 }}
+                    initial={{ opacity: 0, y: 32 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
-                      delay: 0.23 + i * 0.06,
-                      duration: 0.4,
+                      delay: 0.4 + i * 0.08,
+                      duration: 0.5,
                       ease: [0.16, 1, 0.3, 1],
                     }}
-                    className="text-[13px] font-mono font-black uppercase tracking-[0.35em] text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400"
+                    className="text-4xl sm:text-5xl font-display font-black uppercase leading-none tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400"
+                    style={{ display: 'inline-block' }}
                   >
                     {letter}
-                  </motion.span>
+                  </motion.div>
                 ))}
-                {/* Trailing cursor blink — fades out after intro */}
-                <motion.span
+
+                {/* Cursor — fades out after sequence finishes */}
+                <motion.div
                   initial={{ opacity: 1 }}
-                  animate={{ opacity: 0 }}
-                  transition={{ delay: 1.4, duration: 0.3 }}
-                  className="text-[13px] font-mono font-black text-blue-400 ml-0.5"
+                  animate={{ opacity: [1, 1, 0] }}
+                  transition={{ delay: 1.2, duration: 0.4, times: [0, 0.5, 1] }}
+                  className="text-4xl sm:text-5xl font-display font-black text-blue-400 leading-none pb-0.5"
+                  style={{ display: 'inline-block' }}
                 >
                   _
-                </motion.span>
+                </motion.div>
               </div>
 
               {/* ── 3-Pillar intelligence badge strip ── */}
