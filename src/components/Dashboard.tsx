@@ -51,6 +51,115 @@ import {
   URGENCY_CONFIG,
 } from '../integrations/liveFeed';
 
+// ── ActivatePlanForm — inline plan activation via Whop order ID ───────────────
+function ActivatePlanForm({
+  currentUser,
+  onActivate,
+}: {
+  currentUser: AuthUser;
+  onActivate: (updated: AuthUser) => void;
+}) {
+  const [orderId, setOrderId]     = useState('');
+  const [plan, setPlan]           = useState<'Starter' | 'Growth' | 'Pro'>('Starter');
+  const [status, setStatus]       = useState<'idle' | 'success' | 'error'>('idle');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleActivate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderId.trim()) return;
+    setSubmitting(true);
+
+    // Simulate verification delay — in production this would call a webhook
+    setTimeout(() => {
+      const updated: AuthUser = {
+        ...currentUser,
+        subscriptionPlan: plan,
+        billingHistory: [
+          {
+            id:        `act-${Date.now()}`,
+            invoiceNo: `WHC-${orderId.trim().slice(-8).toUpperCase()}`,
+            date:      new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+            amount:    plan === 'Starter' ? 99 : plan === 'Growth' ? 199 : 299,
+            plan:      `${plan} Plan`,
+            status:    'Paid',
+          },
+          ...(currentUser.billingHistory ?? []),
+        ],
+      };
+      onActivate(updated);
+      setStatus('success');
+      setSubmitting(false);
+    }, 1200);
+  };
+
+  if (status === 'success') {
+    return (
+      <div className="border-t border-blue-500/20 px-6 py-4 flex items-center gap-3 bg-emerald-500/5">
+        <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0" />
+        <p className="text-sm font-bold text-emerald-300">
+          {plan} plan activated. Reload to see your unlocked features.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="ml-auto text-xs font-mono font-bold text-blue-400 hover:text-blue-300 cursor-pointer transition-colors"
+        >
+          Reload now
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleActivate}
+      className="border-t border-blue-500/15 px-6 py-4 flex flex-col sm:flex-row items-end gap-3"
+    >
+      <div className="flex-1 min-w-0">
+        <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+          Whop Order ID
+        </label>
+        <input
+          type="text"
+          value={orderId}
+          onChange={e => setOrderId(e.target.value)}
+          placeholder="e.g. ord_xxxxxxxxxxxxxxxx"
+          className="w-full bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-blue-600 text-white text-sm px-4 py-2.5 rounded-lg outline-none transition-all font-mono placeholder:text-slate-700"
+        />
+      </div>
+      <div className="shrink-0">
+        <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+          Plan
+        </label>
+        <select
+          value={plan}
+          onChange={e => setPlan(e.target.value as any)}
+          className="bg-slate-950 border border-slate-700 text-white text-sm px-3 py-2.5 rounded-lg outline-none focus:border-blue-600 transition-all font-mono"
+        >
+          <option value="Starter">Starter — $99</option>
+          <option value="Growth">Growth — $199</option>
+          <option value="Pro">Pro — $299</option>
+        </select>
+      </div>
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        type="submit"
+        disabled={submitting || !orderId.trim()}
+        className="shrink-0 px-5 py-2.5 bg-slate-800 border border-slate-600 hover:border-blue-500 text-slate-200 hover:text-white text-sm font-mono font-black uppercase tracking-widest rounded-lg transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+      >
+        {submitting ? (
+          <><div className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" /> Verifying...</>
+        ) : (
+          'Activate Plan'
+        )}
+      </motion.button>
+      {status === 'error' && (
+        <p className="text-xs font-mono text-red-400 w-full">Order ID not found. Contact support if this persists.</p>
+      )}
+    </form>
+  );
+}
+
 export default function Dashboard() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [localLeads, setLocalLeads] = useState<Lead[]>([]);
@@ -807,6 +916,83 @@ export default function Dashboard() {
         </motion.div>
 
       </div>
+
+      {/* ── ACTIVATE PLAN ────────────────────────────────────────────────────── */}
+      {currentUser && userPlan === 'Free Trial' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45, duration: 0.5 }}
+          className="bg-gradient-to-br from-blue-600/10 via-indigo-600/8 to-slate-900 border border-blue-500/30 rounded-2xl overflow-hidden"
+        >
+          <div className="px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+            {/* Left */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0">
+                <Zap className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-display font-black text-white">
+                  Activate Your Plan
+                </h3>
+                <p className="text-xs font-mono text-slate-400 mt-0.5 leading-relaxed">
+                  Already paid on Whop? Enter your order ID below to unlock your plan features instantly.
+                </p>
+              </div>
+            </div>
+
+            {/* Right — plan buttons */}
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              {([
+                { name: 'Starter', price: '$99', url: 'https://whop.com/checkout/plan_txHzVnJkSgWey' },
+                { name: 'Growth',  price: '$199', url: 'https://whop.com/checkout/plan_NY1zTd8pFbhch' },
+                { name: 'Pro',     price: '$299', url: 'https://whop.com/checkout/plan_VUIIv64AQrBer' },
+              ] as const).map(plan => (
+                <motion.button
+                  key={plan.name}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => window.open(plan.url, '_blank', 'noopener,noreferrer')}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-mono font-black uppercase tracking-widest rounded-lg transition-all cursor-pointer shadow-lg shadow-blue-500/20"
+                >
+                  {plan.name} {plan.price}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* Activate with order ID */}
+          <ActivatePlanForm currentUser={currentUser} onActivate={triggerSessionUpdate} />
+        </motion.div>
+      )}
+
+      {/* Upgrade banner for Starter users — nudge toward Growth */}
+      {currentUser && userPlan === 'Starter' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45, duration: 0.5 }}
+          className="flex items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl px-5 py-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+              <TrendingUp className="h-4 w-4 text-indigo-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white">Unlock Competitor Intel + Permit Feeds</p>
+              <p className="text-xs font-mono text-slate-500">Growth plan adds real Google Maps competitor data, FEMA alerts, and Census permits.</p>
+            </div>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => window.open('https://whop.com/checkout/plan_NY1zTd8pFbhch', '_blank', 'noopener,noreferrer')}
+            className="shrink-0 px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-xs font-mono font-black uppercase tracking-widest rounded-lg cursor-pointer transition-all"
+          >
+            Upgrade $199
+          </motion.button>
+        </motion.div>
+      )}
 
       {/* ── ROI CALCULATOR ──────────────────────────────────────────────────── */}
       {(() => {

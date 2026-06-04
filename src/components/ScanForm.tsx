@@ -21,8 +21,16 @@ import {
   DollarSign,
   Zap,
   BarChart3,
+  AlertTriangle,
+  LogIn,
+  ExternalLink,
 } from 'lucide-react';
 import { StatesList } from '../types';
+import { getActiveSession } from '../authService';
+
+// ── Scan limit constants ───────────────────────────────────────────────────────
+const FREE_SCAN_KEY = 'jobleak_free_scan_used';
+const WHOP_STARTER  = 'https://whop.com/checkout/plan_txHzVnJkSgWey';
 
 interface ScanFormProps {
   onScanComplete: (city: string, industry: string, serviceText: string) => void;
@@ -62,12 +70,22 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
   const [city, setCity] = useState('Austin');
   const [industry, setIndustry] = useState('HVAC');
   const [serviceType, setServiceType] = useState('Emergency AC Repair');
-  
-  const [scanning, setScanning] = useState(false);
-  const [scanPhase, setScanPhase] = useState(0);
-  const [terminalLines, setTerminalLines] = useState<string[]>([]);
-  const [scanComplete, setScanComplete] = useState(false);
-  const terminalRef = useRef<HTMLDivElement>(null);
+
+  const [scanning, setScanning]             = useState(false);
+  const [scanPhase, setScanPhase]           = useState(0);
+  const [terminalLines, setTerminalLines]   = useState<string[]>([]);
+  const [scanComplete, setScanComplete]     = useState(false);
+  const terminalRef                         = useRef<HTMLDivElement>(null);
+
+  // ── Gate state ──────────────────────────────────────────────────────────────
+  const [showPaywall, setShowPaywall]       = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  // Check gate on mount
+  const session           = getActiveSession();
+  const isLoggedIn        = !!session;
+  const freeScanUsed      = localStorage.getItem(FREE_SCAN_KEY) === '1';
+  const isPaidUser        = isLoggedIn && ['Starter','Growth','Pro'].includes(session?.subscriptionPlan ?? '');
 
   // Auto-update cities when state changes
   useEffect(() => {
@@ -104,6 +122,13 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // ── Gate: free scan used + not paid ────────────────────────────────────
+    if (!isPaidUser && freeScanUsed) {
+      setShowPaywall(true);
+      return;
+    }
+
     setScanning(true);
     setScanPhase(0);
     setTerminalLines([]);
@@ -115,9 +140,22 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
     const addLine = () => {
       if (i >= script.length) {
         setScanComplete(true);
-        // Step 1: save the scan data first
+
+        // Mark free scan as used for non-paid users
+        if (!isPaidUser) {
+          localStorage.setItem(FREE_SCAN_KEY, '1');
+        }
+
+        // Save scan data immediately
         onScanComplete(city, industry, serviceType);
-        // Step 2: wait a full tick for React to flush state, THEN route once
+
+        // If not logged in — show login prompt before routing to Radar
+        if (!isLoggedIn) {
+          setShowLoginPrompt(true);
+          return;
+        }
+
+        // Logged-in paid users route straight to Radar
         setTimeout(() => {
           onRouteChange('#radar');
         }, 4200);
@@ -171,6 +209,147 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl" />
       </div>
+
+      {/* ─── PAYWALL OVERLAY — free scan already used ─── */}
+      <AnimatePresence>
+        {showPaywall && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-slate-950/95 backdrop-blur-sm flex items-center justify-center px-4"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-md w-full text-center space-y-6"
+            >
+              {/* Icon */}
+              <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center mx-auto">
+                <Lock className="h-8 w-8 text-orange-400" />
+              </div>
+
+              {/* Heading */}
+              <div className="space-y-2">
+                <h2 className="text-2xl font-display font-black text-white tracking-tight">
+                  Free Scan Used
+                </h2>
+                <p className="text-slate-400 font-mono text-sm leading-relaxed">
+                  You've used your free Deep Market Audit™. Upgrade to run unlimited scans and unlock your full intelligence dashboard.
+                </p>
+              </div>
+
+              {/* What they get */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 text-left space-y-2">
+                {[
+                  'Unlimited scans — any city, any trade',
+                  'Live intelligence feed updated daily',
+                  'Google Ads campaign generator',
+                  'Competitor intel + permit feeds',
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2.5 text-xs font-mono text-slate-300">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    {f}
+                  </div>
+                ))}
+              </div>
+
+              {/* CTAs */}
+              <div className="space-y-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => window.open(WHOP_STARTER, '_blank', 'noopener,noreferrer')}
+                  className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-display font-black text-sm uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                  <span className="relative z-10">Upgrade — Starter $99/mo</span>
+                  <ExternalLink className="h-4 w-4 relative z-10" />
+                </motion.button>
+                <button
+                  type="button"
+                  onClick={() => { window.location.hash = '#login'; }}
+                  className="w-full py-3 bg-slate-800 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-mono font-bold text-sm rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Already have an account? Sign in
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── LOGIN PROMPT — after free scan for unregistered users ─── */}
+      <AnimatePresence>
+        {showLoginPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-slate-950/95 backdrop-blur-sm flex items-center justify-center px-4"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-md w-full text-center space-y-6"
+            >
+              {/* Icon */}
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto">
+                <CheckCircle className="h-8 w-8 text-emerald-400" />
+              </div>
+
+              {/* Heading */}
+              <div className="space-y-2">
+                <h2 className="text-2xl font-display font-black text-white tracking-tight">
+                  Audit Complete
+                </h2>
+                <p className="text-slate-400 font-mono text-sm leading-relaxed">
+                  Your intelligence report is ready. Create a free account to save your results, access your dashboard, and deploy your campaign.
+                </p>
+              </div>
+
+              {/* Value preview */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 text-left space-y-2">
+                {[
+                  'Save and revisit your market scan',
+                  'Live intelligence feed for your city',
+                  'Download your Google Ads campaign',
+                  'Track ROI and logged calls',
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2.5 text-xs font-mono text-slate-300">
+                    <CheckCircle className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                    {f}
+                  </div>
+                ))}
+              </div>
+
+              {/* CTAs */}
+              <div className="space-y-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { setShowLoginPrompt(false); onRouteChange('#login'); }}
+                  className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-display font-black text-sm uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                  <LogIn className="h-4 w-4 relative z-10" />
+                  <span className="relative z-10">Create Free Account</span>
+                </motion.button>
+                <button
+                  type="button"
+                  onClick={() => { setShowLoginPrompt(false); onRouteChange('#radar'); }}
+                  className="w-full py-2.5 text-slate-500 hover:text-slate-300 font-mono text-sm transition-colors cursor-pointer"
+                >
+                  View results without saving
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── FULL-SCREEN INTELLIGENCE TERMINAL OVERLAY ─── */}
       <AnimatePresence>
@@ -629,7 +808,27 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
             </div>
 
             {/* Submit */}
-            <motion.button
+              {/* Gate banner — shown when free scan used and user isn't paid */}
+              {!isPaidUser && freeScanUsed && (
+                <div className="flex items-start gap-3 p-4 bg-orange-500/8 border border-orange-500/20 rounded-xl">
+                  <Lock className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-orange-300">Free scan already used</p>
+                    <p className="text-xs font-mono text-slate-500 mt-0.5">
+                      Upgrade to Starter ($99/mo) for unlimited scans.{' '}
+                      <button
+                        type="button"
+                        onClick={() => window.open(WHOP_STARTER, '_blank', 'noopener,noreferrer')}
+                        className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
+                      >
+                        Upgrade now
+                      </button>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <motion.button
               type="submit"
               disabled={scanning}
               whileHover={!scanning ? { scale: 1.01 } : {}}
