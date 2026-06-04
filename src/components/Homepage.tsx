@@ -57,10 +57,10 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-7 space-y-7"
+              className="lg:col-span-7 space-y-5"
             >
               {/* ── Animated brand name — letter by letter ── */}
-              <div className="flex items-end gap-1 overflow-visible">
+              <div className="flex items-end gap-0 overflow-visible -mb-1">
                 {/* "JOB" — white */}
                 {'JOB'.split('').map((letter, i) => (
                   <motion.div
@@ -79,14 +79,8 @@ export default function Homepage({ onStartInstantScan, onRouteChange }: Homepage
                   </motion.div>
                 ))}
 
-                {/* Thin divider between words */}
-                <motion.div
-                  initial={{ opacity: 0, scaleY: 0 }}
-                  animate={{ opacity: 1, scaleY: 1 }}
-                  transition={{ delay: 0.34, duration: 0.25 }}
-                  className="w-px h-8 bg-slate-700 mx-1 self-center"
-                  style={{ display: 'inline-block' }}
-                />
+                {/* Small gap between JOB and LEAK */}
+                <div style={{ display: 'inline-block', width: '6px' }} />
 
                 {/* "LEAK" — gradient */}
                 {'LEAK'.split('').map((letter, i) => (
