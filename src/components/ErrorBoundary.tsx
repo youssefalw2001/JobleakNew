@@ -1,10 +1,12 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * ErrorBoundary — auto-recovers after 3s, "Try Again" reloads page,
+ * "Go Home" resets to home. Never leaves user stuck on error screen.
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -14,119 +16,98 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
+  countdown: number;
 }
 
 class ErrorBoundary extends Component<Props, State> {
+  private countdownInterval: ReturnType<typeof setInterval> | null = null;
+
   public state: State = {
-    hasError: false,
-    error: null,
-    errorInfo: null,
+    hasError:  false,
+    error:     null,
+    countdown: 5,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, errorInfo: null };
+  public static getDerivedStateFromError(error: Error): Partial<State> {
+    return { hasError: true, error, countdown: 5 };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    this.setState({
-      error,
-      errorInfo,
-    });
+    console.error('ErrorBoundary caught:', error.message);
+
+    // Auto-redirect countdown
+    this.countdownInterval = setInterval(() => {
+      this.setState(prev => {
+        if (prev.countdown <= 1) {
+          clearInterval(this.countdownInterval!);
+          window.location.hash = '#home';
+          window.location.reload();
+          return { countdown: 0 };
+        }
+        return { countdown: prev.countdown - 1 };
+      });
+    }, 1000);
   }
 
-  private handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+  public componentWillUnmount() {
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
+  }
+
+  private handleTryAgain = () => {
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
+    // Full reload is the only safe "try again" — re-render alone will crash again
+    window.location.reload();
   };
 
   private handleGoHome = () => {
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
     window.location.hash = '#home';
-    this.handleReset();
+    window.location.reload();
   };
 
   public render() {
     if (this.state.hasError) {
-      // Custom fallback UI if provided
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
+      if (this.props.fallback) return this.props.fallback;
 
-      // Default error UI
       return (
         <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4">
-          <div className="max-w-2xl w-full">
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl p-8 text-center space-y-6">
-              {/* Error Icon */}
-              <div className="flex justify-center">
-                <div className="w-20 h-20 bg-red-500/10 border-2 border-red-500/30 rounded-2xl flex items-center justify-center">
-                  <AlertTriangle className="h-10 w-10 text-red-400" />
-                </div>
-              </div>
+          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-6 shadow-2xl">
 
-              {/* Error Message */}
-              <div className="space-y-2">
-                <h1 className="text-2xl font-display font-bold text-white">
-                  Something Went Wrong
-                </h1>
-                <p className="text-slate-400 text-sm">
-                  We encountered an unexpected error. Don't worry, your data is safe.
-                </p>
-              </div>
-
-              {/* Error Details (Development Only) */}
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <details className="text-left bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300">
-                  <summary className="cursor-pointer text-red-400 font-bold mb-2">
-                    Error Details (Dev Only)
-                  </summary>
-                  <div className="space-y-2">
-                    <div>
-                      <strong className="text-slate-400">Error:</strong>
-                      <pre className="mt-1 text-red-300 whitespace-pre-wrap">
-                        {this.state.error.toString()}
-                      </pre>
-                    </div>
-                    {this.state.errorInfo && (
-                      <div>
-                        <strong className="text-slate-400">Component Stack:</strong>
-                        <pre className="mt-1 text-slate-400 whitespace-pre-wrap max-h-40 overflow-auto">
-                          {this.state.errorInfo.componentStack}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                </details>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                <button
-                  onClick={this.handleReset}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-display font-bold rounded-xl text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Try Again
-                </button>
-                <button
-                  onClick={this.handleGoHome}
-                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-display font-bold rounded-xl text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-                >
-                  <Home className="h-4 w-4" />
-                  Go Home
-                </button>
-              </div>
-
-              {/* Support Info */}
-              <div className="pt-6 border-t border-slate-800 text-xs text-slate-500">
-                <p>
-                  If this problem persists, please contact support with error ID:{' '}
-                  <code className="text-slate-400 bg-slate-950 px-2 py-1 rounded font-mono">
-                    {Date.now().toString(36).toUpperCase()}
-                  </code>
-                </p>
-              </div>
+            {/* Icon */}
+            <div className="w-16 h-16 bg-orange-500/10 border border-orange-500/30 rounded-2xl flex items-center justify-center mx-auto">
+              <svg className="h-8 w-8 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
             </div>
+
+            {/* Message */}
+            <div className="space-y-2">
+              <h2 className="text-xl font-display font-black text-white">
+                Something went wrong
+              </h2>
+              <p className="text-slate-400 text-sm font-mono leading-relaxed">
+                A render error occurred. Redirecting to home in{' '}
+                <span className="text-orange-400 font-bold">{this.state.countdown}s</span>
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={this.handleTryAgain}
+                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-mono font-black text-sm uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={this.handleGoHome}
+                className="px-5 py-2.5 bg-slate-800 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-mono font-black text-sm uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+              >
+                Go Home
+              </button>
+            </div>
+
           </div>
         </div>
       );

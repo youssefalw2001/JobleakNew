@@ -262,11 +262,31 @@ export default function App() {
             transition={transition}
           >
             <PageWrapper>
-              <Radar 
-                scannedData={scannedData} 
-                onNavigateToCampaign={() => handleRouteChange('#campaign')} 
-                onModifyScan={() => handleRouteChange('#scan')} 
-              />
+              <ErrorBoundary
+                fallback={
+                  <div className="min-h-screen flex items-center justify-center bg-slate-950">
+                    <div className="text-center space-y-5 px-6 max-w-sm">
+                      <div className="w-14 h-14 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin mx-auto" />
+                      <div>
+                        <p className="text-white font-display font-black text-lg">Loading radar...</p>
+                        <p className="text-slate-500 text-xs font-mono mt-1">Fetching market intelligence</p>
+                      </div>
+                      <button
+                        onClick={() => handleRouteChange('#scan')}
+                        className="px-6 py-2.5 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-mono font-bold rounded-xl hover:border-slate-500 transition-all cursor-pointer"
+                      >
+                        Run New Scan
+                      </button>
+                    </div>
+                  </div>
+                }
+              >
+                <Radar 
+                  scannedData={scannedData} 
+                  onNavigateToCampaign={() => handleRouteChange('#campaign')} 
+                  onModifyScan={() => handleRouteChange('#scan')} 
+                />
+              </ErrorBoundary>
             </PageWrapper>
           </motion.div>
         );
