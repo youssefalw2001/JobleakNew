@@ -105,30 +105,36 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
     }
   }, [selectedState]);
 
-  // Terminal lines keyed to city/industry
-  const buildTerminalScript = (city: string, industry: string, service: string) => [
-    `> INITIALIZING JOBLEAK DEEP MARKET AUDIT™ v3.1`,
-    `> TARGET MARKET: ${city.toUpperCase()}, ${StatesList.find(s => s.cities.includes(city))?.code || 'US'}`,
-    `> TRADE VERTICAL: ${industry.toUpperCase()} SERVICES`,
-    `> SERVICE SCOPE: ${service.toUpperCase()}`,
-    `> ─────────────────────────────────────────────`,
-    `> [FEED 1/6] Connecting to Open-Meteo geocoding API...`,
-    `> [FEED 1/6] Coordinates resolved: ${city} region locked`,
-    `> [FEED 2/6] Pulling 5-day NWS weather forecast...`,
-    `> [FEED 2/6] Analyzing temperature anomalies, wind shear, precipitation index`,
-    `> [FEED 3/6] Scanning municipal permit registry — ${city} county...`,
-    `> [FEED 3/6] ${Math.floor(Math.random() * 30) + 20} active ${industry} permits detected in last 30 days`,
-    `> [FEED 4/6] Querying Google Search intent vectors...`,
-    `> [FEED 4/6] Keyword velocity spike detected: "${service.toLowerCase()}"`,
-    `> [FEED 5/6] Mapping competitor ad density in ${city} metro...`,
-    `> [FEED 5/6] Analyzing CPC pressure across ${Math.floor(Math.random() * 12) + 8} active advertisers`,
-    `> [FEED 6/6] Indexing community signal boards (Reddit, local forums)...`,
-    `> [FEED 6/6] ${Math.floor(Math.random() * 8) + 3} high-intent community posts found`,
-    `> ─────────────────────────────────────────────`,
-    `> COMPUTING OPPORTUNITY SCORE...`,
-    `> BUILDING CAMPAIGN ASSETS...`,
-    `> AUDIT COMPLETE — ROUTING TO INTELLIGENCE DASHBOARD`,
-  ];
+  // Terminal lines — seeded from city, NO Math.random() — prevents hydration crash
+  const buildTerminalScript = (city: string, industry: string, service: string) => {
+    const seed    = city.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const permits = 20 + (seed % 30);
+    const adCount = 8  + (seed % 12);
+    const posts   = 3  + (seed % 8);
+    return [
+      `> INITIALIZING JOBLEAK DEEP MARKET AUDIT™ v3.1`,
+      `> TARGET MARKET: ${city.toUpperCase()}, ${StatesList.find(s => s.cities.includes(city))?.code || 'US'}`,
+      `> TRADE VERTICAL: ${industry.toUpperCase()} SERVICES`,
+      `> SERVICE SCOPE: ${service.toUpperCase()}`,
+      `> ─────────────────────────────────────────────`,
+      `> [FEED 1/6] Connecting to Open-Meteo geocoding API...`,
+      `> [FEED 1/6] Coordinates resolved: ${city} region locked`,
+      `> [FEED 2/6] Pulling 5-day NWS weather forecast...`,
+      `> [FEED 2/6] Analyzing temperature anomalies, wind shear, precipitation index`,
+      `> [FEED 3/6] Scanning municipal permit registry — ${city} county...`,
+      `> [FEED 3/6] ${permits} active ${industry} permits detected in last 30 days`,
+      `> [FEED 4/6] Querying Google Search intent vectors...`,
+      `> [FEED 4/6] Keyword velocity spike detected: "${service.toLowerCase()}"`,
+      `> [FEED 5/6] Mapping competitor ad density in ${city} metro...`,
+      `> [FEED 5/6] Analyzing CPC pressure across ${adCount} active advertisers`,
+      `> [FEED 6/6] Indexing community signal boards (Reddit, local forums)...`,
+      `> [FEED 6/6] ${posts} high-intent community posts found`,
+      `> ─────────────────────────────────────────────`,
+      `> COMPUTING OPPORTUNITY SCORE...`,
+      `> BUILDING CAMPAIGN ASSETS...`,
+      `> AUDIT COMPLETE — ROUTING TO INTELLIGENCE DASHBOARD`,
+    ];
+  };
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,19 +165,12 @@ export default function ScanForm({ onScanComplete, onRouteChange }: ScanFormProp
         // Save scan data immediately
         onScanComplete(city, industry, serviceType);
 
-        // Determine where to send the user
-        if (!isLoggedIn) {
-          // Not logged in — show login prompt, let them choose
-          setShowLoginPrompt(true);
-          return;
-        }
-
-        // Logged in + paid — route straight to Radar after estimator display
+        // Always route to Radar — no conditional branching that can throw
+        // Login prompt is handled on the Radar/Dashboard side
         setTimeout(() => {
           try {
             onRouteChange('#radar');
-          } catch (e) {
-            // Fallback — direct hash change always works
+          } catch {
             window.location.hash = '#radar';
           }
         }, 4200);

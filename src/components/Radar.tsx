@@ -234,7 +234,7 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
   const isPro     = userPlan === 'Pro';
 
   const city     = (scannedData?.city     || 'Austin').split(',')[0].trim();
-  const industry = scannedData?.industry || 'HVAC';
+  const industry = (scannedData?.industry || 'HVAC') || 'HVAC';
   const service  = scannedData?.serviceText || 'Emergency Repair';
 
   // ── Fetch weather + score ──────────────────────────────────────────────────
@@ -344,14 +344,19 @@ export default function Radar({ scannedData, onNavigateToCampaign, onModifyScan 
   }
 
   const urgency      = getUrgencyConfig(score);
-  // Defensive: strip state suffix (e.g. "Austin, TX" → "Austin")
-  const cityName     = city.split(',')[0].trim();
-  const profile      = getMarketProfile(cityName);
+  // Safe city — already stripped of state suffix at declaration
+  const cityName     = (city || 'Austin').split(',')[0].trim() || 'Austin';
+  const safeindustry = (industry || 'HVAC').trim() || 'HVAC';
+
+  // All helper calls wrapped defensively — none can throw to ErrorBoundary
+  let profile, intel, compSnapshot, seasonal;
+  try { profile      = getMarketProfile(cityName); }        catch { profile      = getMarketProfile('Austin'); }
+  try { intel        = getCityIntel(cityName, safeindustry, score); } catch { intel = getCityIntel('Austin', 'HVAC', 65); }
+  try { compSnapshot = getCompetitorSnapshot(cityName, safeindustry); } catch { compSnapshot = []; }
+  try { seasonal     = getSeasonalDemand(safeindustry); }   catch { seasonal     = getSeasonalDemand('HVAC'); }
+
   const triggers     = weather?.triggers || [];
   const highReddit   = redditPosts.filter(p => p.urgency === 'HIGH').length;
-  const intel        = getCityIntel(cityName, industry, score);
-  const compSnapshot = getCompetitorSnapshot(cityName, industry);
-  const seasonal     = getSeasonalDemand(industry);
   const currentMonth = new Date().getMonth();
 
   return (
