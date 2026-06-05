@@ -5,7 +5,7 @@ import firebaseConfig from '../firebase-applet-config.json';
 import { AuthUser } from './authService';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app); // default Firestore instance — your private project
 export const auth = getAuth(app);
 
 // Provider setup
