@@ -37,7 +37,7 @@ export interface AuthUser {
 }
 
 const USERS_DB_KEY = 'jobleak_users_db_v1';
-const SESSION_KEY = 'jobleak_active_session_v1';
+const SESSION_KEY = 'jobleak_active_session_v3'; // v3 clears all prior stale sessions
 const REMEMBERED_KEY = 'jobleak_remembered_credentials_v1';
 
 // Local localStorage fallback definitions removed in favor of direct Firestore usage.
@@ -50,6 +50,9 @@ export function saveUsersDatabase(db: AuthUser[]) {
 
 export function getActiveSession(): AuthUser | null {
   try {
+    // Clear any old session keys from previous versions
+    localStorage.removeItem('jobleak_active_session_v1');
+    localStorage.removeItem('jobleak_active_session_v2');
     const raw = localStorage.getItem(SESSION_KEY);
     if (raw) {
       return JSON.parse(raw) as AuthUser;
