@@ -37,7 +37,8 @@ import {
   Building2,
   Search,
   Radio,
-  ExternalLink
+  ExternalLink,
+  ArrowRight,
 } from 'lucide-react';
 import { getLocalLeads } from '../supabase';
 import { Lead } from '../types';
@@ -162,36 +163,65 @@ function ActivatePlanForm({
 
 export default function Dashboard() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [localLeads, setLocalLeads] = useState<Lead[]>([]);
+  const [localLeads, setLocalLeads]   = useState<Lead[]>([]);
+  const [authLoading, setAuthLoading] = useState(true);
   
-  // Custom call log dialog options
-  const [showLogForm, setShowLogForm] = useState(false);
-  const [newCallerName, setNewCallerName] = useState('');
-  const [newCallNotes, setNewCallNotes] = useState('');
-  const [newCallStatus, setNewCallStatus] = useState<'Inbound' | 'Outbound'>('Inbound');
-  
-  // Live intelligence feed
-  const [feed, setFeed]             = useState<FeedOpportunity[]>([]);
-  const [feedFilter, setFeedFilter] = useState<OpportunityType | 'all'>('all');
-  const [feedExpanded, setFeedExpanded] = useState<string | null>(null);
+  const [showLogForm, setShowLogForm]       = useState(false);
+  const [newCallerName, setNewCallerName]   = useState('');
+  const [newCallNotes, setNewCallNotes]     = useState('');
+  const [newCallStatus, setNewCallStatus]   = useState<'Inbound' | 'Outbound'>('Inbound');
 
-  // Simulated stats for fallback
-  const [guestMetrics] = useState({
-    activeBids: 8,
-    adSpendSaved: 150,
-  });
+  const [feed, setFeed]                     = useState<FeedOpportunity[]>([]);
+  const [feedFilter, setFeedFilter]         = useState<OpportunityType | 'all'>('all');
+  const [feedExpanded, setFeedExpanded]     = useState<string | null>(null);
 
-  // Sync user context and leads on mount
+  const [guestMetrics] = useState({ activeBids: 8, adSpendSaved: 150 });
+
   useEffect(() => {
-    const session = getActiveSession();
-    setCurrentUser(session);
-    setLocalLeads(getLocalLeads());
+    // Load from cache immediately — no flash of guest state
+    const cached = getActiveSession();
+    if (cached) {
+      setCurrentUser(cached);
+      setAuthLoading(false);
+      setLocalLeads(getLocalLeads());
+      setFeed(generateLiveFeed(
+        cached.city?.split(',')[0] ?? 'Austin',
+        cached.industry ?? 'HVAC',
+        (cached.subscriptionPlan ?? 'Free Trial') as any,
+      ));
+    }
 
-    // Generate live feed from profile
-    const city     = session?.city     ?? 'Austin, TX';
-    const industry = session?.industry ?? 'HVAC';
-    const plan     = session?.subscriptionPlan ?? 'Starter';
-    setFeed(generateLiveFeed(city.split(',')[0], industry, plan));
+    // Then verify with Firebase and refresh if needed
+    import('../firebase').then(async ({ auth, db }) => {
+      auth.onAuthStateChanged(async (firebaseUser) => {
+        if (firebaseUser) {
+          try {
+            const { getDoc, doc } = await import('firebase/firestore');
+            const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+            if (snap.exists()) {
+              const profile = snap.data() as AuthUser;
+              saveActiveSession(profile);
+              setCurrentUser(profile);
+              setLocalLeads(getLocalLeads());
+              setFeed(generateLiveFeed(
+                profile.city?.split(',')[0] ?? 'Austin',
+                profile.industry ?? 'HVAC',
+                (profile.subscriptionPlan ?? 'Free Trial') as any,
+              ));
+            } else if (!cached) {
+              setCurrentUser(null);
+            }
+          } catch {
+            if (!cached) setCurrentUser(null);
+          }
+        } else {
+          saveActiveSession(null);
+          setCurrentUser(null);
+          setFeed([]);
+        }
+        setAuthLoading(false);
+      });
+    }).catch(() => { setAuthLoading(false); });
   }, []);
 
   // Update session and save to localStorage
@@ -430,25 +460,49 @@ export default function Dashboard() {
             </motion.button>
           </motion.div>
         </motion.div>
+      ) : authLoading ? (
+        /* ── LOADING STATE — never flashes guest banner while Firebase resolves ── */
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 flex items-center gap-4">
+          <div className="w-8 h-8 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin shrink-0" />
+          <div>
+            <p className="text-white font-bold text-sm">Loading your dashboard...</p>
+            <p className="text-slate-500 text-xs font-mono mt-0.5">Verifying your session</p>
+          </div>
+        </div>
       ) : (
-        <>
-          {/* GUEST BANNER */}
-          <div className="bg-slate-900 border border-slate-800 text-slate-300 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between shadow-sm">
-            <div className="space-y-1">
-              <h3 className="font-display font-bold text-lg text-white">Welcome to JobLeak Command Center</h3>
-              <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
-                Log into a personalized account to bind custom billing invoices, track trade parameters, and record secure client communications isolated strictly to your account.
-              </p>
-            </div>
-            <button
+        /* ── GUEST BANNER — only shown when Firebase confirms no active session ── */
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <h3 className="font-display font-black text-xl text-white">
+              Sign in to access your dashboard
+            </h3>
+            <p className="text-sm text-slate-400 font-mono leading-relaxed max-w-xl">
+              Your live intelligence feed, campaign tools, ROI tracker, and market data are waiting. Sign in or create a free account in 30 seconds.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="button"
               onClick={() => { window.location.hash = '#login'; }}
-              className="mt-4 md:mt-0 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-mono font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-blue-500 shadow-lg shadow-blue-500/20"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-display font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer shadow-lg shadow-blue-500/20 flex items-center gap-2 group relative overflow-hidden"
             >
-              Sign In / Get Access
-            </button>
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              <span className="relative z-10">Sign In</span>
+              <ArrowRight className="h-4 w-4 relative z-10 group-hover:translate-x-0.5 transition-transform" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => { window.location.hash = '#login'; }}
+              className="px-6 py-3 bg-slate-800 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white text-sm font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Create Free Account
+            </motion.button>
           </div>
-        </>
+        </div>
       )}
 
       {/* DYNAMIC EXPANDING MANUAL CALL RECORDER FORM */}
