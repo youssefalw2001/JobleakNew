@@ -28,19 +28,47 @@ const Onboarding = lazy(() => import('./components/Onboarding'));
 const SCANNED_DATA_CACHE_KEY = 'jobleak_scanned_data_cache';
 
 export default function App() {
-  const [currentRoute, setCurrentRoute] = useState<string>('#home');
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [currentRoute,    setCurrentRoute]    = useState<string>('#home');
+  const [isLoggedIn,      setIsLoggedIn]      = useState<boolean>(false);
   const [authInitialized, setAuthInitialized] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding,  setShowOnboarding]  = useState(false);
 
   useEffect(() => {
-    import('./firebase').then(({ auth, handleFirestoreError }) => {
-      auth.onAuthStateChanged((user) => {
-        setIsLoggedIn(!!user);
+    import('./firebase').then(async ({ auth, db }) => {
+      auth.onAuthStateChanged(async (firebaseUser) => {
+        if (firebaseUser) {
+          try {
+            // Always load THIS user's real Firestore profile
+            const { getDoc, doc } = await import('firebase/firestore');
+            const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+            if (snap.exists()) {
+              const profile = snap.data() as import('./authService').AuthUser;
+              // Overwrite any stale cached session with the real profile
+              saveActiveSession(profile);
+            } else {
+              // No Firestore profile yet — clear any stale cache from a different user
+              const cached = getActiveSession();
+              if (cached && cached.id !== firebaseUser.uid) {
+                saveActiveSession(null);
+              }
+            }
+          } catch {
+            // If Firestore read fails, clear cache if it belongs to a different user
+            const cached = getActiveSession();
+            if (cached && cached.id !== firebaseUser.uid) {
+              saveActiveSession(null);
+            }
+          }
+          setIsLoggedIn(true);
+        } else {
+          // Signed out — always clear the session cache
+          saveActiveSession(null);
+          setIsLoggedIn(false);
+        }
         setAuthInitialized(true);
       });
     }).catch(err => {
-      console.warn("Firebase not setup yet, using default auth", err);
+      console.warn('Firebase auth init failed:', err);
       setIsLoggedIn(!!getActiveSession());
       setAuthInitialized(true);
     });
@@ -280,7 +308,17 @@ export default function App() {
             transition={transition}
           >
             <PageWrapper>
-              <Dashboard />
+              {!authInitialized ? (
+                <PageLoadingOverlay message="Verifying session..." />
+              ) : !isLoggedIn ? (
+                // Not logged in — redirect to login
+                (() => {
+                  setTimeout(() => handleRouteChange('#login'), 0);
+                  return <PageLoadingOverlay message="Redirecting to sign in..." />;
+                })()
+              ) : (
+                <Dashboard />
+              )}
             </PageWrapper>
           </motion.div>
         );
@@ -296,19 +334,25 @@ export default function App() {
             transition={transition}
           >
             <PageWrapper>
-              {isLoggedIn
-                ? <Dashboard />
-                : <Login onLoginSuccess={(user) => {
-                    setIsLoggedIn(true);
-                    // Show onboarding if this is the user's first time
-                    const done = localStorage.getItem('jobleak_onboarding_done');
-                    if (!done) {
-                      setShowOnboarding(true);
-                    } else {
-                      handleRouteChange('#dashboard');
-                    }
-                  }} />
-              }
+              {isLoggedIn ? (
+                // Already logged in — redirect to dashboard
+                (() => {
+                  // Use effect-like immediate redirect
+                  setTimeout(() => handleRouteChange('#dashboard'), 0);
+                  return <PageLoadingOverlay message="Redirecting to dashboard..." />;
+                })()
+              ) : (
+                <Login onLoginSuccess={(user) => {
+                  setIsLoggedIn(true);
+                  saveActiveSession(user);
+                  const done = localStorage.getItem('jobleak_onboarding_done');
+                  if (!done) {
+                    setShowOnboarding(true);
+                  } else {
+                    handleRouteChange('#dashboard');
+                  }
+                }} />
+              )}
             </PageWrapper>
           </motion.div>
         );

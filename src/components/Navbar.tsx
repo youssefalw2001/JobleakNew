@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Radio, Layers, DollarSign, Activity, Lock, ScanLine } from 'lucide-react';
+import { Menu, X, Radio, Layers, DollarSign, Activity, Lock, ScanLine, LogOut, User } from 'lucide-react';
 import JobLeakLogo from './JobLeakLogo';
+import { getActiveSession, saveActiveSession } from '../authService';
 
 interface NavbarProps {
   currentRoute: string;
@@ -13,23 +14,50 @@ interface NavbarProps {
 }
 
 export default function Navbar({ currentRoute, onRouteChange }: NavbarProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  // Set up click handlers that update route state and collapse navigation drawer automatically
+  const [isOpen, setIsOpen]           = useState(false);
+  const [isLoggedIn, setIsLoggedIn]   = useState(false);
+  const [userName, setUserName]       = useState('');
+
+  // Re-check session on every route change so Navbar is always in sync
+  useEffect(() => {
+    const session = getActiveSession();
+    setIsLoggedIn(!!session);
+    setUserName(session?.businessName || session?.email || '');
+  }, [currentRoute]);
+
   const handleNavClick = (route: string) => {
     onRouteChange(route);
     setIsOpen(false);
     window.location.hash = route;
   };
 
+  const handleLogout = () => {
+    import('../firebase').then(({ auth }) => {
+      auth.signOut().then(() => {
+        saveActiveSession(null);
+        setIsLoggedIn(false);
+        handleNavClick('#home');
+        window.location.reload();
+      });
+    }).catch(() => {
+      saveActiveSession(null);
+      setIsLoggedIn(false);
+      handleNavClick('#home');
+    });
+    setIsOpen(false);
+  };
+
+  // Nav items — swap Login for Dashboard when logged in
   const navItems = [
-    { label: 'Home', route: '#home', icon: Layers },
-    { label: 'Risk Scan', route: '#scan', icon: ScanLine },
-    { label: 'Opportunity Radar', route: '#radar', icon: Radio },
-    { label: 'Campaign Engine', route: '#campaign', icon: Layers },
-    { label: 'SaaS Pricing', route: '#pricing', icon: DollarSign },
-    { label: 'Dashboard', route: '#dashboard', icon: Activity },
-    { label: 'Login', route: '#login', icon: Lock },
+    { label: 'Home',              route: '#home',      icon: Layers },
+    { label: 'Risk Scan',         route: '#scan',      icon: ScanLine },
+    { label: 'Radar',             route: '#radar',     icon: Radio },
+    { label: 'Campaign',          route: '#campaign',  icon: Layers },
+    { label: 'Pricing',           route: '#pricing',   icon: DollarSign },
+    ...(isLoggedIn
+      ? [{ label: 'Dashboard', route: '#dashboard', icon: Activity }]
+      : [{ label: 'Sign In',   route: '#login',     icon: Lock }]
+    ),
   ];
 
   const getActiveClasses = (route: string) => {
@@ -81,15 +109,48 @@ export default function Navbar({ currentRoute, onRouteChange }: NavbarProps) {
             })}
           </div>
 
-          {/* Right action banner with Scan Form shortcut */}
+          {/* Right action area */}
           <div className="hidden md:flex items-center space-x-3">
-            <button
-              id="cta-quick-scan-nav"
-              onClick={() => handleNavClick('#scan')}
-              className="px-4 py-2 text-sm font-display font-semibold uppercase tracking-wider text-white bg-blue-600 rounded hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20 cursor-pointer"
-            >
-              Analyze Your Market
-            </button>
+            {isLoggedIn ? (
+              <>
+                {/* User chip */}
+                <button
+                  onClick={() => handleNavClick('#dashboard')}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg transition-all cursor-pointer"
+                >
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black shrink-0">
+                    {userName?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="text-slate-300 text-xs font-mono font-bold max-w-[100px] truncate">
+                    {userName || 'My Account'}
+                  </span>
+                </button>
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-slate-500 hover:text-red-400 text-xs font-mono font-bold rounded-lg hover:bg-red-950/20 transition-all cursor-pointer border border-transparent hover:border-red-500/20"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleNavClick('#login')}
+                  className="px-4 py-2 text-sm font-mono font-bold text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-lg transition-all cursor-pointer"
+                >
+                  Sign In
+                </button>
+                <button
+                  id="cta-quick-scan-nav"
+                  onClick={() => handleNavClick('#scan')}
+                  className="px-4 py-2 text-sm font-display font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-xl transition-all shadow-lg shadow-blue-500/20 cursor-pointer"
+                >
+                  Free Scan
+                </button>
+              </>
+            )}
           </div>
 
           {/* Hamburger trigger for adaptive mobile testing viewports */}
@@ -130,14 +191,24 @@ export default function Navbar({ currentRoute, onRouteChange }: NavbarProps) {
               );
             })}
             
-            <div className="pt-3 border-t border-slate-800 px-3 mt-2">
-              <button
-                id="cta-quick-scan-nav-mobile"
-                onClick={() => handleNavClick('#scan')}
-                className="w-full text-center px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-white bg-blue-600 rounded hover:bg-blue-500 transition-all shadow-sm"
-              >
-                Perform Risk Scan
-              </button>
+            <div className="pt-3 border-t border-slate-800 px-3 mt-2 space-y-2">
+              {isLoggedIn ? (
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-center px-4 py-2.5 text-sm font-mono font-bold uppercase tracking-wider text-red-400 bg-red-950/20 border border-red-500/20 rounded-xl hover:bg-red-950/40 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              ) : (
+                <button
+                  id="cta-quick-scan-nav-mobile"
+                  onClick={() => handleNavClick('#scan')}
+                  className="w-full text-center px-4 py-2.5 text-sm font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl transition-all cursor-pointer"
+                >
+                  Free Market Scan
+                </button>
+              )}
             </div>
           </div>
         </div>
