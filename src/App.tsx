@@ -38,30 +38,36 @@ export default function App() {
       auth.onAuthStateChanged(async (firebaseUser) => {
         if (firebaseUser) {
           try {
-            // Always load THIS user's real Firestore profile
-            const { getDoc, doc } = await import('firebase/firestore');
-            const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+            const { getDoc, setDoc, doc } = await import('firebase/firestore');
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            const snap    = await getDoc(userRef);
+
             if (snap.exists()) {
               const profile = snap.data() as import('./authService').AuthUser;
-              // Overwrite any stale cached session with the real profile
               saveActiveSession(profile);
             } else {
-              // No Firestore profile yet — clear any stale cache from a different user
-              const cached = getActiveSession();
-              if (cached && cached.id !== firebaseUser.uid) {
-                saveActiveSession(null);
-              }
+              // Auto-create profile so session is never empty
+              const profile: import('./authService').AuthUser = {
+                id:               firebaseUser.uid,
+                email:            firebaseUser.email ?? undefined,
+                phone:            firebaseUser.phoneNumber ?? undefined,
+                businessName:     firebaseUser.displayName || 'My Business',
+                industry:         'HVAC',
+                city:             'Austin, TX',
+                subscriptionPlan: 'Free Trial',
+                loggedCalls:      [],
+                billingHistory:   [],
+                adSpendSaved:     0,
+                activeLeadsCount: 0,
+              };
+              await setDoc(userRef, profile);
+              saveActiveSession(profile);
             }
           } catch {
-            // If Firestore read fails, clear cache if it belongs to a different user
-            const cached = getActiveSession();
-            if (cached && cached.id !== firebaseUser.uid) {
-              saveActiveSession(null);
-            }
+            // Firestore unavailable — keep whatever is cached
           }
           setIsLoggedIn(true);
         } else {
-          // Signed out — always clear the session cache
           saveActiveSession(null);
           setIsLoggedIn(false);
         }

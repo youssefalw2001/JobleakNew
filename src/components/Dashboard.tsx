@@ -196,23 +196,57 @@ export default function Dashboard() {
       auth.onAuthStateChanged(async (firebaseUser) => {
         if (firebaseUser) {
           try {
-            const { getDoc, doc } = await import('firebase/firestore');
-            const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+            const { getDoc, setDoc, doc } = await import('firebase/firestore');
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            const snap    = await getDoc(userRef);
+
+            let profile: AuthUser;
+
             if (snap.exists()) {
-              const profile = snap.data() as AuthUser;
-              saveActiveSession(profile);
-              setCurrentUser(profile);
-              setLocalLeads(getLocalLeads());
-              setFeed(generateLiveFeed(
-                profile.city?.split(',')[0] ?? 'Austin',
-                profile.industry ?? 'HVAC',
-                (profile.subscriptionPlan ?? 'Free Trial') as any,
-              ));
-            } else if (!cached) {
-              setCurrentUser(null);
+              profile = snap.data() as AuthUser;
+            } else {
+              // No profile yet — auto-create from Firebase Auth data
+              profile = {
+                id:               firebaseUser.uid,
+                email:            firebaseUser.email ?? undefined,
+                phone:            firebaseUser.phoneNumber ?? undefined,
+                businessName:     firebaseUser.displayName || 'My Business',
+                industry:         'HVAC',
+                city:             'Austin, TX',
+                subscriptionPlan: 'Free Trial',
+                loggedCalls:      [],
+                billingHistory:   [],
+                adSpendSaved:     0,
+                activeLeadsCount: 0,
+              };
+              await setDoc(userRef, profile);
             }
-          } catch {
-            if (!cached) setCurrentUser(null);
+
+            saveActiveSession(profile);
+            setCurrentUser(profile);
+            setLocalLeads(getLocalLeads());
+            setFeed(generateLiveFeed(
+              profile.city?.split(',')[0] ?? 'Austin',
+              profile.industry ?? 'HVAC',
+              (profile.subscriptionPlan ?? 'Free Trial') as any,
+            ));
+          } catch (err) {
+            console.error('Dashboard profile load error:', err);
+            const fallback: AuthUser = {
+              id:               firebaseUser.uid,
+              email:            firebaseUser.email ?? undefined,
+              businessName:     firebaseUser.displayName || 'My Business',
+              industry:         'HVAC',
+              city:             'Austin, TX',
+              subscriptionPlan: 'Free Trial',
+              loggedCalls:      [],
+              billingHistory:   [],
+              adSpendSaved:     0,
+              activeLeadsCount: 0,
+            };
+            saveActiveSession(fallback);
+            setCurrentUser(fallback);
+            setFeed(generateLiveFeed('Austin', 'HVAC', 'Free Trial'));
           }
         } else {
           saveActiveSession(null);
